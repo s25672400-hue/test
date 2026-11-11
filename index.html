@@ -21,7 +21,6 @@
       justify-content: space-between; align-items: center;
     }
 
-    /* 頂部資訊列 */
     #top-bar {
       flex-shrink: 0; width: 100%; padding: 4px 8px;
       display: flex; flex-direction: column; align-items: center; z-index: 10;
@@ -32,18 +31,16 @@
       border-radius: 20px; font-size: 0.75rem; margin-top: 2px; cursor: pointer; font-weight: bold;
     }
 
-    /* 中間主舞台 */
     #main-stage {
       flex: 1; width: 100%; display: flex; gap: 10px;
       justify-content: center; align-items: center; padding: 2px 8px;
       overflow: hidden; min-height: 0;
     }
 
-    /* 左側欄 (鎖定 95px 寬度) */
     #left-side-col {
       width: 95px; min-width: 95px; max-width: 95px;
       flex-shrink: 0 !important;
-      display: flex; flex-direction: column; gap: 6px; justify-content: center;
+      display: flex; flex-direction: column; gap: 5px; justify-content: center;
     }
     #side-leaderboard {
       background: #222; border: 1.5px solid #444; border-radius: 6px;
@@ -60,28 +57,30 @@
 
     #hold-box-container {
       background: #222; border: 1.5px solid #555; border-radius: 6px;
-      padding: 4px; text-align: center;
+      padding: 3px; text-align: center;
     }
     #hold-canvas {
       background: #000; border: 1px solid #333; border-radius: 4px;
-      margin: 3px auto; display: block;
+      margin: 2px auto; display: block;
     }
     .hold-btn {
       background: #0288d1; color: white; border: none; border-radius: 4px;
-      padding: 4px; font-size: 0.7rem; width: 100%; cursor: pointer; font-weight: bold;
+      padding: 3px; font-size: 0.68rem; width: 100%; cursor: pointer; font-weight: bold;
     }
 
-    /* 【新增】暫存方塊下方的「積分成就」按鈕 */
     .reward-entry-btn {
       background: linear-gradient(135deg, #ff8f00, #ff6f00);
       color: #fff; border: 1.5px solid #ffb300; border-radius: 6px;
-      padding: 6px 2px; font-size: 0.72rem; width: 100%; cursor: pointer;
-      font-weight: bold; box-shadow: 0 2px 6px rgba(255,143,0,0.4);
-      display: flex; align-items: center; justify-content: center; gap: 3px;
+      padding: 5px 2px; font-size: 0.72rem; width: 100%; cursor: pointer;
+      font-weight: bold; box-shadow: 0 2px 6px rgba(255,143,0,0.4); text-align: center;
     }
-    .reward-entry-btn:active { transform: scale(0.96); }
+    #backpack-btn {
+      background: linear-gradient(135deg, #7b1fa2, #4a148c);
+      color: #fff; border: 1.5px solid #ba68c8; border-radius: 6px;
+      padding: 5px 2px; font-size: 0.72rem; width: 100%; cursor: pointer;
+      font-weight: bold; box-shadow: 0 2px 6px rgba(186,104,200,0.4); text-align: center;
+    }
 
-    /* 棋盤標準尺寸 */
     #game-container { 
       position: relative; border: 3px solid #555; background: #000;
       width: 216px; height: 360px; flex-shrink: 0 !important;
@@ -97,20 +96,17 @@
     }
     #float-score.show { transform: translate(-50%, -120%); opacity: 1; }
 
-    /* 控制按鈕區 */
     #mobile-controls {
       flex-shrink: 0 !important; width: 100%; max-width: 350px;
       padding: 4px 12px calc(12px + env(safe-area-inset-bottom));
       display: flex; flex-direction: column;
     }
     #dir-pad {
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 10px; width: 100%;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%;
     }
     .ctrl-btn {
-      height: 52px; line-height: 48px;
-      background: #2a2a2a; color: white; border: 2px solid #555;
-      border-radius: 12px; font-size: 1.45rem; user-select: none;
+      height: 52px; line-height: 48px; background: #2a2a2a; color: white;
+      border: 2px solid #555; border-radius: 12px; font-size: 1.45rem; user-select: none;
       box-shadow: 0 3px #111;
     }
     .ctrl-btn:active { background: #444; transform: translateY(2px); box-shadow: 0 1px #111; }
@@ -122,14 +118,13 @@
     }
     .drop-btn:active { background: #b71c1c; transform: translateY(2px); box-shadow: 0 1px #500; }
 
-    /* 彈窗樣式 */
     .modal {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.85); display: flex;
       justify-content: center; align-items: center; z-index: 100;
     }
     .modal-box {
-      background: #262626; padding: 18px; border-radius: 12px;
+      background: #262626; padding: 20px; border-radius: 12px;
       width: 92%; max-width: 520px; text-align: left; max-height: 85vh; overflow-y: auto;
     }
     .option-btn {
@@ -172,57 +167,48 @@
       padding: 3px 6px; font-size: 0.75rem; cursor: pointer;
     }
 
-    /* ==================== 科技風成就表單專屬樣式 ==================== */
-    #reward-box {
-      border-radius: 14px; padding: 14px 12px; max-width: 440px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.8); transition: all 0.3s;
+    /* 成就按鈕疊加層 (精準對齊 6 個寶箱位置) */
+    .reward-container-box { position: relative; width: 100%; }
+    .chest-overlay-grid {
+      position: absolute; top: 18.5%; bottom: 4.5%; right: 4%; width: 28%;
+      display: flex; flex-direction: column; justify-content: space-between;
     }
-    /* 五頁不同的主題外框發光色調 */
-    .reward-theme-1 { background: #051329; border: 2.5px solid #00e5ff; box-shadow: 0 0 15px rgba(0,229,255,0.3) !important; }
-    .reward-theme-2 { background: #052414; border: 2.5px solid #00e676; box-shadow: 0 0 15px rgba(0,230,118,0.3) !important; }
-    .reward-theme-3 { background: #261802; border: 2.5px solid #ffd600; box-shadow: 0 0 15px rgba(255,214,0,0.3) !important; }
-    .reward-theme-4 { background: #24050d; border: 2.5px solid #ff1744; box-shadow: 0 0 15px rgba(255,23,68,0.3) !important; }
-    .reward-theme-5 { background: #1c0529; border: 2.5px solid #e040fb; box-shadow: 0 0 15px rgba(224,64,251,0.3) !important; }
+    .chest-status-btn {
+      height: 14%; border: none; border-radius: 4px; font-size: 0.7rem;
+      font-weight: bold; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; user-select: none;
+    }
+    .status-locked { background: rgba(0,0,0,0.65); color: #888; border: 1px solid #555; }
+    .status-unlocked {
+      background: linear-gradient(135deg, #ffd600, #ff6f00); color: #000;
+      animation: pulseGlow 1.2s infinite alternate; font-weight: bold; border: 1px solid #fff;
+    }
+    @keyframes pulseGlow {
+      from { box-shadow: 0 0 6px #ffd600; transform: scale(0.96); }
+      to { box-shadow: 0 0 16px #ffeb3b, 0 0 25px #ff9800; transform: scale(1.04); }
+    }
+    .status-claimed { background: rgba(76,175,80,0.25); color: #81c784; border: 1px solid #4caf50; }
 
-    .reward-header {
-      text-align: center; font-size: 1.15rem; font-weight: bold;
-      letter-spacing: 1px; padding: 4px 10px; margin-bottom: 8px;
-      border-radius: 6px; display: inline-block; width: 100%;
+    #flying-key {
+      position: fixed; width: 70px; height: 70px; z-index: 999;
+      pointer-events: none; transition: all 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+      display: none;
     }
-    .table-reward {
-      width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-bottom: 12px;
-    }
-    .table-reward tr { border-bottom: 1px solid rgba(255,255,255,0.12); }
-    .table-reward td { padding: 6px 4px; text-align: left; }
-    .score-target { font-weight: bold; color: #fff; width: 28%; white-space: nowrap; }
-    .reward-desc { width: 52%; line-height: 1.3; }
-    .reward-badge { width: 20%; text-align: right; font-weight: bold; white-space: nowrap; }
-    
-    .nav-btn-group {
-      display: flex; gap: 8px; justify-content: space-between; align-items: center;
-    }
-    .page-nav-btn {
-      padding: 9px 16px; border: none; border-radius: 6px; font-weight: bold;
-      font-size: 0.85rem; cursor: pointer; flex: 1; text-align: center; color: white;
-    }
-    .close-reward-btn {
-      padding: 9px 14px; background: #424242; color: #eee; border: 1px solid #666;
-      border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: bold;
+    @keyframes keyGlow {
+      from { transform: scale(0.9) rotate(-5deg); filter: drop-shadow(0 0 8px #ffd600); }
+      to { transform: scale(1.1) rotate(5deg); filter: drop-shadow(0 0 20px #ffeb3b); }
     }
   </style>
 </head>
 <body>
 
-  <!-- 1. 頂部資訊列 -->
   <div id="top-bar">
     <button id="admin-entry-btn" class="top-bar-btn" style="background:#e91e63;" onclick="openAdmin()">⚙️ 教師管理戰報</button>
     <div id="score-board">選手: <span id="display-name">-</span> | 累計總分: <span id="score">0</span></div>
   </div>
 
-  <!-- 2. 中間主舞台 -->
   <div id="main-stage">
     <div id="left-side-col">
-      <!-- 風雲榜 -->
       <div id="side-leaderboard">
         <div style="font-weight:bold; color:#ffeb3b; border-bottom:1px solid #555; padding-bottom:2px; margin-bottom:3px; text-align:center;">
           🏆 班級風雲榜
@@ -230,25 +216,22 @@
         <div id="rank-list-box"><div style="color:#aaa; text-align:center;">載入中...</div></div>
       </div>
 
-      <!-- 暫存方塊箱 -->
       <div id="hold-box-container">
         <div style="font-size:0.68rem; color:#81d4fa; font-weight:bold;">📦 暫存方塊</div>
         <canvas id="hold-canvas" width="45" height="45"></canvas>
         <button class="hold-btn" onclick="handleHoldPiece()">暫存 / 換塊</button>
       </div>
 
-      <!-- 【新增】暫存方塊正下方的「積分成就」按鈕 -->
       <button class="reward-entry-btn" onclick="openRewardModal()">🏆 積分成就</button>
+      <button id="backpack-btn" onclick="openBackpackModal()">🎒 道具背包</button>
     </div>
 
-    <!-- 棋盤標準尺寸 -->
     <div id="game-container">
       <canvas id="tetris" width="240" height="400"></canvas>
       <div id="float-score">+0</div>
     </div>
   </div>
 
-  <!-- 3. 底部控制按鈕區 -->
   <div id="mobile-controls">
     <div id="dir-pad">
       <button class="ctrl-btn" id="btn-left">⬅️</button>
@@ -259,23 +242,61 @@
     <button class="drop-btn" onclick="requestHardDrop()">⚡ 到底放置</button>
   </div>
 
-  <!-- ==================== 【新增】五頁積分成就表單彈窗 ==================== -->
-<!-- ==================== 圖片版五頁積分成就彈窗 ==================== -->
-  <div id="reward-modal" class="modal" style="display:none;">
-    <div class="modal-box" style="background:#0a0e17; border: 2px solid #00e5ff; border-radius: 14px; max-width: 440px; padding: 12px; text-align: center;">
-      <!-- 直接展示您的成就原圖 -->
-      <img id="reward-img" src="page1.png" style="width: 100%; border-radius: 8px; display: block; margin-bottom: 12px; box-shadow: 0 0 15px rgba(0,229,255,0.2);" alt="成就挑戰">
+  <!-- 動畫元素：鑰匙飛入背包 -->
+  <img id="flying-key" src="" alt="鑰匙">
 
-      <!-- 翻頁與關閉控制按鈕群 -->
-      <div class="nav-btn-group" style="display:flex; gap:8px; justify-content:space-between; align-items:center;">
-        <button id="reward-prev-btn" class="page-nav-btn" style="background:#0288d1; display:none;" onclick="changeRewardPage(-1)">⬅️ 上一頁</button>
-        <button class="close-reward-btn" onclick="closeRewardModal()">關閉</button>
-        <button id="reward-next-btn" class="page-nav-btn" style="background:#00e5ff; color:#000;" onclick="changeRewardPage(1)">下一頁 ➡️</button>
+  <!-- 1. 達標解鎖提醒彈窗 -->
+  <div id="unlock-alert-modal" class="modal" style="display:none; z-index:150;">
+    <div class="modal-box" style="text-align:center; max-width:340px; background:#1a237e; border:2.5px solid #00e5ff; box-shadow:0 0 25px rgba(0,229,255,0.6);">
+      <h3 style="color:#ffeb3b; margin:0 0 8px; font-size:1.3rem;">🎉 寶箱解鎖通知！</h3>
+      <p id="unlock-alert-text" style="font-size:0.95rem; line-height:1.5; color:#fff; margin-bottom:15px;"></p>
+      <div style="display:flex; gap:8px;">
+        <button class="option-btn" style="text-align:center; background:#4caf50; font-weight:bold; margin:0; flex:1;" onclick="goToChestPage()">🎁 前往成就榜開箱</button>
+        <button class="option-btn" style="text-align:center; background:#555; margin:0; flex:1;" onclick="closeUnlockAlert()">稍後再開</button>
       </div>
     </div>
   </div>
 
-  <!-- 登入與其他彈窗群 -->
+  <!-- 2. 寶箱開啟動畫彈窗 -->
+  <div id="open-chest-modal" class="modal" style="display:none; z-index:200;">
+    <div class="modal-box" style="text-align:center; max-width:320px; background:#111; border:2px solid #ffd600; box-shadow:0 0 30px #ff9800;">
+      <h3 id="open-chest-title" style="color:#ffeb3b; margin:0 0 10px;">🎁 寶箱開啟中！</h3>
+      <div style="margin:20px 0;">
+        <img id="chest-open-key-img" src="" style="width:90px; height:90px; animation: keyGlow 0.8s infinite alternate;" alt="獲得鑰匙">
+      </div>
+      <p id="chest-open-desc" style="font-size:1.1rem; color:#fff; font-weight:bold;"></p>
+      <button class="option-btn" style="text-align:center; background:#ff9800; font-weight:bold;" onclick="collectKeyAnimation()">放入背包 🎒</button>
+    </div>
+  </div>
+
+  <!-- 3. 五頁成就圖片彈窗 (含狀態按鈕疊加層) -->
+  <div id="reward-modal" class="modal" style="display:none;">
+    <div class="modal-box" style="background:#0a0e17; border: 2px solid #00e5ff; border-radius: 14px; max-width: 440px; padding: 12px; text-align: center;">
+      <div class="reward-container-box">
+        <img id="reward-img" src="page1.png" style="width: 100%; border-radius: 8px; display: block; box-shadow: 0 0 15px rgba(0,229,255,0.2);" alt="成就挑戰">
+        <div class="chest-overlay-grid" id="chest-grid"></div>
+      </div>
+      <div class="nav-btn-group" style="display:flex; gap:8px; justify-content:space-between; align-items:center; margin-top:10px;">
+        <button id="reward-prev-btn" class="option-btn" style="background:#0288d1; display:none; margin:0; padding:10px 14px;" onclick="changeRewardPage(-1)">⬅️ 上一頁</button>
+        <button class="option-btn" style="background:#555; margin:0; padding:10px 14px;" onclick="closeRewardModal()">關閉</button>
+        <button id="reward-next-btn" class="option-btn" style="background:#00e5ff; color:#000; margin:0; padding:10px 14px; font-weight:bold;" onclick="changeRewardPage(1)">下一頁 ➡️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 🎒 學生道具背包彈窗 -->
+  <div id="backpack-modal" class="modal" style="display:none; z-index:120;">
+    <div class="modal-box" style="background:#1c1028; border:2px solid #ba68c8; border-radius:14px; max-width:420px; box-shadow:0 0 20px rgba(186,104,200,0.4);">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #4a148c; padding-bottom:8px; margin-bottom:12px;">
+        <h3 style="color:#e1bee7; margin:0;">🎒 我的道具背包</h3>
+        <button style="background:none; border:none; color:#bbb; font-size:1.2rem; cursor:pointer;" onclick="closeBackpackModal()">✕</button>
+      </div>
+      <div id="backpack-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; max-height:55vh; overflow-y:auto; padding:4px;"></div>
+      <button class="option-btn" style="text-align:center; background:#7b1fa2; margin-top:12px;" onclick="closeBackpackModal()">關閉背包</button>
+    </div>
+  </div>
+
+  <!-- 登入與其他原有彈窗 -->
   <div id="login-modal" class="modal">
     <div class="modal-box" style="text-align:center;">
       <h3>🎮 答題俄羅斯方塊</h3>
@@ -364,9 +385,7 @@
         </div>
         <div style="overflow-x:auto;">
           <table>
-            <thead>
-              <tr><th>姓名</th><th>總分</th><th>答對</th><th>錯題紀錄</th><th>操作</th></tr>
-            </thead>
+            <thead><tr><th>姓名</th><th>總分</th><th>答對</th><th>錯題紀錄</th><th>操作</th></tr></thead>
             <tbody id="scores-tbody"><tr><td colspan="5">讀取戰況中...</td></tr></tbody>
           </table>
         </div>
@@ -374,14 +393,12 @@
 
       <div id="tab-editQ" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:0.8rem; color:#aaa;">可直接在此調整題目難度或刪除題目：</span>
+          <span style="font-size:0.8rem; color:#aaa;">調整題目難度或刪除題目：</span>
           <button style="padding:4px 8px; font-size:0.75rem; background:#0288d1; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="renderAdminQuestionsList()">🔄 刷新題庫</button>
         </div>
         <div style="overflow-x:auto;">
           <table>
-            <thead>
-              <tr><th style="width:10%;">題號</th><th style="width:45%;">題目內容</th><th style="width:25%;">難度等級</th><th style="width:20%;">操作</th></tr>
-            </thead>
+            <thead><tr><th style="width:10%;">題號</th><th style="width:45%;">題目內容</th><th style="width:25%;">難度等級</th><th style="width:20%;">操作</th></tr></thead>
             <tbody id="admin-q-tbody"><tr><td colspan="4">載入題庫中...</td></tr></tbody>
           </table>
         </div>
@@ -389,7 +406,6 @@
 
       <div id="tab-importExcel" style="display:none; text-align:left;">
         <h4 style="margin:5px 0 10px; color:#ffeb3b;">📑 Excel (.xlsx) 題庫批次上傳</h4>
-        <p style="font-size:0.8rem; color:#aaa; line-height:1.4;">直接上傳整份 Excel 題庫，系統自動寫入雲端試算表：</p>
         <button class="option-btn" style="text-align:center; background:#673ab7; margin-bottom:12px; padding:10px;" onclick="downloadExcelTemplate()">📥 下載標準出題 Excel 範本</button>
         <input type="file" id="excel-file-input" accept=".xlsx, .xls" class="input-field" style="background:#222;">
         <button class="option-btn" style="text-align:center; background:#4caf50; font-weight:bold;" onclick="processExcelUpload()">🚀 開始批次匯入至題庫</button>
@@ -448,31 +464,59 @@
 <script>
 /* ==================== 1. 老師設定區 ==================== */
 const GOOGLE_CLIENT_ID = "479239925260-p9kvntbmlp23ginho02tou72ckg0n9f1.apps.googleusercontent.com";
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzWLVLbAAVd3rGVktP08gluiIqzSn4xSl-0QFRZF8wNcEqCN9d-MFeEX8YO3MIEFJOV/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4gsJeWiRma_jWSny0cvjlzCPGCY_A6Mz4qtP4dga7zZmFkxO1jm-sC8We8KCg3Cnu/exec";
 const TEACHER_EMAIL = "s256724@gmail.com";
 
 document.getElementById("g_id_onload").setAttribute("data-client_id", GOOGLE_CLIENT_ID);
 
-/* ==================== 2. 核心變數 ==================== */
-let userEmail = "";
-let userName = "";
-let isTeacher = false;
-let questions = [];
-let currentQuestion = null;
-let totalScore = 0;
-let correctCount = 0;
-let answeredCorrectly = false;
+/* ==================== 2. 30 個里程碑與專屬鑰匙資料庫 ==================== */
+const rawMilestones = [
+  [0, 1000, "普通寶箱", "普通寶箱鑰匙", 1, "key1000P.png"],
+  [0, 2000, "普通寶箱", "普通寶箱鑰匙", 2, "key2000P.png"],
+  [0, 3000, "中級寶箱", "中級寶箱鑰匙", 1, "key3000P.png"],
+  [0, 5000, "中級寶箱", "中級寶箱鑰匙", 2, "key5000P.png"],
+  [0, 10000, "高級寶箱", "高級寶箱鑰匙", 1, "key10000P.png"],
+  [0, 15000, "高級寶箱", "高級寶箱鑰匙", 2, "key15000P.png"],
+  [1, 20000, "青銅寶箱", "青銅寶箱鑰匙", 1, "key20000P.png"],
+  [1, 26000, "青銅寶箱", "青銅寶箱鑰匙", 2, "key26000P.png"],
+  [1, 35000, "青銅寶箱", "青銅寶箱鑰匙", 3, "key35000P.png"],
+  [1, 50000, "銀鐵寶箱", "銀鐵寶箱鑰匙", 1, "key50000P.png"],
+  [1, 75000, "銀鐵寶箱", "銀鐵寶箱鑰匙", 2, "key75000P.png"],
+  [1, 100000, "銀鐵寶箱", "銀鐵寶箱鑰匙", 3, "key100000P.png"],
+  [2, 150000, "銀鐵寶箱", "銀鐵寶箱鑰匙", 5, "key150000P.png"],
+  [2, 200000, "黃金寶箱", "黃金寶箱鑰匙", 1, "key200000P.png"],
+  [2, 260000, "黃金寶箱", "黃金寶箱鑰匙", 2, "key260000P.png"],
+  [2, 350000, "黃金寶箱", "黃金寶箱鑰匙", 3, "key350000P.png"],
+  [2, 500000, "黃金寶箱", "黃金寶箱鑰匙", 5, "key500000P.png"],
+  [2, 750000, "紅寶石寶箱", "紅寶石寶箱鑰匙", 1, "key750000P.png"],
+  [3, 1000000, "紅寶石寶箱", "紅寶石寶箱鑰匙", 3, "key1000000P.png"],
+  [3, 1500000, "紅寶石寶箱", "紅寶石寶箱鑰匙", 5, "key1500000P.png"],
+  [3, 2000000, "綠寶石寶箱", "綠寶石寶箱鑰匙", 1, "key2000000P.png"],
+  [3, 2500000, "綠寶石寶箱", "綠寶石寶箱鑰匙", 3, "key2500000P.png"],
+  [3, 3000000, "綠寶石寶箱", "綠寶石寶箱鑰匙", 5, "key3000000P.png"],
+  [3, 3600000, "紫水晶寶箱", "紫水晶寶箱鑰匙", 1, "key3600000P.png"],
+  [4, 4500000, "紫水晶寶箱", "紫水晶寶箱鑰匙", 3, "key4500000P.png"],
+  [4, 5500000, "紫水晶寶箱", "紫水晶寶箱鑰匙", 5, "key5500000P.png"],
+  [4, 7000000, "傳說寶箱", "傳說寶箱鑰匙", 1, "key7000000P.png"],
+  [4, 8000000, "傳說寶箱", "傳說寶箱鑰匙", 3, "key8000000P.png"],
+  [4, 9000000, "傳說寶箱", "傳說寶箱鑰匙", 5, "key9000000P.png"],
+  [4, 10000000, "至尊寶箱", "至尊寶箱鑰匙", 1, "key10000000P.png"]
+];
+const milestonesData = rawMilestones.map(([page, score, chest, key, count, img]) => ({ page, score, chest, key, count, img }));
+
+/* ==================== 3. 核心變數 ==================== */
+let userEmail = "", userName = "", isTeacher = false;
+let questions = [], currentQuestion = null;
+let totalScore = 0, correctCount = 0, answeredCorrectly = false;
 let arena = createMatrix(12, 20);
-let gamePaused = true;
-let wrongQuestions = [];
+let gamePaused = true, wrongQuestions = [], qMasteryStats = {}; 
+let pendingReviewQIds = [], roundCounter = 0, selectedMinDiff = 1;
+let holdPieceType = null, hasUsedHoldThisRound = false;
 
-let qMasteryStats = {}; 
-let pendingReviewQIds = []; 
-let roundCounter = 0;
-let selectedMinDiff = 1;
-
-let holdPieceType = null;
-let hasUsedHoldThisRound = false;
+let claimedMilestones = [];  
+let notifiedMilestones = []; 
+let studentInventory = {};   
+let pendingUnlockTarget = null;
 
 const MAX_CORRECT_PER_Q = 5; 
 const REVIEW_INTERVAL = 2;   
@@ -485,59 +529,9 @@ const diffConfigs = {
   5: { name: "☠️ 地獄 (+5分)", class: "diff-5", score: 5 }
 };
 
-/* ==================== 【新增】五頁成就獎勵資料設定 ==================== */
+const rewardImages = ["page1.png", "page2.png", "page3.png", "page4.png", "page5.png"];
 let currentRewardPageIndex = 0;
 
-// 5 頁圖片檔名清單（若您有放在圖床，也可以直接填網址 https://...）
-const rewardImages = [
-  "page1.png", // 第 1 頁：入門挑戰
-  "page2.png", // 第 2 頁：青銅與鐵銀
-  "page3.png", // 第 3 頁：黃金與寶石
-  "page4.png", // 第 4 頁：紅綠紫晶
-  "page5.png"  // 第 5 頁：至尊傳奇
-];
-
-function openRewardModal() {
-  currentRewardPageIndex = 0; // 預設打開第 1 頁
-  renderRewardPage(currentRewardPageIndex);
-  document.getElementById("reward-modal").style.display = "flex";
-}
-
-function closeRewardModal() {
-  document.getElementById("reward-modal").style.display = "none";
-}
-
-function changeRewardPage(delta) {
-  currentRewardPageIndex += delta;
-  if (currentRewardPageIndex < 0) currentRewardPageIndex = 0;
-  if (currentRewardPageIndex > 4) currentRewardPageIndex = 4;
-  renderRewardPage(currentRewardPageIndex);
-}
-
-function renderRewardPage(pageIdx) {
-  const imgEl = document.getElementById("reward-img");
-  imgEl.src = rewardImages[pageIdx];
-
-  const prevBtn = document.getElementById("reward-prev-btn");
-  const nextBtn = document.getElementById("reward-next-btn");
-
-  // 嚴格遵守各頁的按鈕要求：
-  // 第 1 頁：只有下一頁
-  // 第 2~4 頁：上一頁與下一頁
-  // 第 5 頁：只有上一頁
-  if (pageIdx === 0) {
-    prevBtn.style.display = "none";
-    nextBtn.style.display = "block";
-  } else if (pageIdx === 4) {
-    prevBtn.style.display = "block";
-    nextBtn.style.display = "none";
-  } else {
-    prevBtn.style.display = "block";
-    nextBtn.style.display = "block";
-  }
-}
-
-/* ==================== 3. Google 登入驗證 ==================== */
 function decodeJwt(token) {
   const base64Url = token.split('.')[1];
   const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -589,9 +583,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         await loadQuestionsFromCloud();
         openAdmin();
       }
-    } catch (e) {
-      localStorage.removeItem("remembered_teacher");
-    }
+    } catch (e) { localStorage.removeItem("remembered_teacher"); }
   }
   updateSideLeaderboard();
   drawHoldCanvas();
@@ -609,22 +601,23 @@ async function confirmStudentName() {
       body: JSON.stringify({ action: "login", email: userEmail, name: userName })
     });
     const data = await res.json();
-    if (data.status === "success") {
-      totalScore = data.score;
-      correctCount = data.correctCount;
+    if (data.status === "success" || data.status === "new_user") {
+      totalScore = data.score || 0;
+      correctCount = data.correctCount || 0;
       if (data.wrongList && data.wrongList !== "無 (全對)") wrongQuestions = data.wrongList.split("; ");
       if (data.arena && data.arena.length > 0) arena = data.arena;
       if (data.qMastery) qMasteryStats = data.qMastery;
-      if (data.holdPiece) {
-        holdPieceType = data.holdPiece;
-        drawHoldCanvas();
-      }
+      if (data.holdPiece) { holdPieceType = data.holdPiece; drawHoldCanvas(); }
+      claimedMilestones = data.claimedMilestones || [];
+      studentInventory = data.inventory || {};
+      notifiedMilestones = [...claimedMilestones];
     }
     document.getElementById("display-name").innerText = userName;
     updateScoreUI();
     draw();
     openQuiz();
     updateSideLeaderboard();
+    checkMilestoneAlerts();
   } catch (e) {
     alert("連線失敗，請檢查網路！");
   }
@@ -639,7 +632,162 @@ async function loadQuestionsFromCloud() {
   if (data.status === "success") questions = data.questions;
 }
 
-/* ==================== 4. 暫存方塊機制 ==================== */
+/* ==================== 4. 達標解鎖與開箱 ==================== */
+function checkMilestoneAlerts() {
+  const newlyUnlocked = milestonesData.find(m => 
+    totalScore >= m.score && 
+    !claimedMilestones.includes(m.score) && 
+    !notifiedMilestones.includes(m.score)
+  );
+
+  if (newlyUnlocked) {
+    notifiedMilestones.push(newlyUnlocked.score);
+    pendingUnlockTarget = newlyUnlocked;
+    document.getElementById("unlock-alert-text").innerHTML = 
+      `累計積分達到 <b style="color:#ffd600;">${newlyUnlocked.score.toLocaleString()} 分</b>！<br>` +
+      `<b style="color:#00e5ff;">【${newlyUnlocked.chest}】</b> 已經解鎖！<br>` +
+      `開啟可獲得：<b style="color:#ffeb3b;">${newlyUnlocked.key} ×${newlyUnlocked.count}</b>！`;
+    document.getElementById("unlock-alert-modal").style.display = "flex";
+  }
+}
+
+function closeUnlockAlert() {
+  document.getElementById("unlock-alert-modal").style.display = "none";
+}
+
+function goToChestPage() {
+  closeUnlockAlert();
+  if (pendingUnlockTarget) {
+    currentRewardPageIndex = pendingUnlockTarget.page;
+    openRewardModal();
+  }
+}
+
+function openRewardModal() {
+  renderRewardPage(currentRewardPageIndex);
+  document.getElementById("reward-modal").style.display = "flex";
+}
+
+function closeRewardModal() {
+  document.getElementById("reward-modal").style.display = "none";
+}
+
+function changeRewardPage(delta) {
+  currentRewardPageIndex += delta;
+  if (currentRewardPageIndex < 0) currentRewardPageIndex = 0;
+  if (currentRewardPageIndex > 4) currentRewardPageIndex = 4;
+  renderRewardPage(currentRewardPageIndex);
+}
+
+function renderRewardPage(pageIdx) {
+  document.getElementById("reward-img").src = rewardImages[pageIdx];
+
+  const prevBtn = document.getElementById("reward-prev-btn");
+  const nextBtn = document.getElementById("reward-next-btn");
+  prevBtn.style.display = (pageIdx === 0) ? "none" : "block";
+  nextBtn.style.display = (pageIdx === 4) ? "none" : "block";
+
+  const chestGrid = document.getElementById("chest-grid");
+  chestGrid.innerHTML = "";
+
+  const pageMilestones = milestonesData.filter(m => m.page === pageIdx);
+  pageMilestones.forEach(m => {
+    const btn = document.createElement("button");
+    const isClaimed = claimedMilestones.includes(m.score);
+    const isUnlocked = totalScore >= m.score;
+
+    if (isClaimed) {
+      btn.className = "chest-status-btn status-claimed";
+      btn.innerText = "✅ 已領取";
+    } else if (isUnlocked) {
+      btn.className = "chest-status-btn status-unlocked";
+      btn.innerText = "✨ 開箱";
+      btn.onclick = () => triggerOpenChest(m);
+    } else {
+      btn.className = "chest-status-btn status-locked";
+      btn.innerText = "🔒 鎖定";
+    }
+    chestGrid.appendChild(btn);
+  });
+}
+
+let currentOpeningMilestone = null;
+function triggerOpenChest(m) {
+  currentOpeningMilestone = m;
+  document.getElementById("open-chest-title").innerText = `🎁 開啟【${m.chest}】！`;
+  document.getElementById("chest-open-key-img").src = m.img;
+  document.getElementById("chest-open-desc").innerText = `獲得：${m.key} ×${m.count}！`;
+  document.getElementById("open-chest-modal").style.display = "flex";
+}
+
+function collectKeyAnimation() {
+  document.getElementById("open-chest-modal").style.display = "none";
+  const m = currentOpeningMilestone;
+  if (!m) return;
+
+  claimedMilestones.push(m.score);
+  studentInventory[m.key] = (studentInventory[m.key] || 0) + m.count;
+
+  const flyImg = document.getElementById("flying-key");
+  flyImg.src = m.img;
+  flyImg.style.display = "block";
+  flyImg.style.top = "40%";
+  flyImg.style.left = "45%";
+  flyImg.style.transform = "scale(1.2)";
+  flyImg.style.opacity = "1";
+
+  const bagBtn = document.getElementById("backpack-btn");
+  const rect = bagBtn.getBoundingClientRect();
+
+  setTimeout(() => {
+    flyImg.style.top = `${rect.top}px`;
+    flyImg.style.left = `${rect.left}px`;
+    flyImg.style.transform = "scale(0.2)";
+    flyImg.style.opacity = "0";
+  }, 50);
+
+  setTimeout(() => {
+    flyImg.style.display = "none";
+    autoSaveToCloud();
+    renderRewardPage(currentRewardPageIndex);
+  }, 1050);
+}
+
+/* ==================== 5. 背包檢視 ==================== */
+function openBackpackModal() {
+  const grid = document.getElementById("backpack-grid");
+  grid.innerHTML = "";
+  let totalKeysCount = 0;
+
+  for (const keyName in studentInventory) {
+    const count = studentInventory[keyName];
+    if (count > 0) {
+      totalKeysCount += count;
+      const mItem = milestonesData.find(m => m.key === keyName);
+      const imgSrc = mItem ? mItem.img : "key1000P.png";
+
+      const itemBox = document.createElement("div");
+      itemBox.style.cssText = "background:#2a1b3d; border:1.5px solid #ab47bc; border-radius:8px; padding:8px 4px; text-align:center; position:relative;";
+      itemBox.innerHTML = `
+        <span style="position:absolute; top:3px; right:4px; background:#ffd600; color:#000; font-size:0.65rem; font-weight:bold; border-radius:10px; padding:1px 5px;">×${count}</span>
+        <img src="${imgSrc}" style="width:45px; height:45px; object-fit:contain; display:block; margin:4px auto;" alt="${keyName}">
+        <div style="font-size:0.68rem; color:#fff; font-weight:bold; line-height:1.2; margin-top:4px;">${keyName}</div>
+      `;
+      grid.appendChild(itemBox);
+    }
+  }
+
+  if (totalKeysCount === 0) {
+    grid.innerHTML = `<div style="grid-column:span 3; color:#aaa; font-size:0.85rem; padding:30px 0; text-align:center;">背包目前空空如也<br>快去挑戰消除方塊拿鑰匙吧！</div>`;
+  }
+  document.getElementById("backpack-modal").style.display = "flex";
+}
+
+function closeBackpackModal() {
+  document.getElementById("backpack-modal").style.display = "none";
+}
+
+/* ==================== 6. 暫存方塊與到底放置 ==================== */
 const holdCanvas = document.getElementById("hold-canvas");
 const holdCtx = holdCanvas.getContext("2d");
 holdCtx.scale(11, 11);
@@ -647,13 +795,9 @@ holdCtx.scale(11, 11);
 function drawHoldCanvas() {
   holdCtx.fillStyle = '#000';
   holdCtx.fillRect(0, 0, holdCanvas.width, holdCanvas.height);
-
   if (holdPieceType) {
     const matrix = createPiece(holdPieceType);
-    const offset = {
-      x: (4 - matrix[0].length) / 2,
-      y: (4 - matrix.length) / 2
-    };
+    const offset = { x: (4 - matrix[0].length) / 2, y: (4 - matrix.length) / 2 };
     matrix.forEach((row, y) => {
       row.forEach((value, x) => {
         if (value !== 0) {
@@ -687,8 +831,7 @@ function handleHoldPiece() {
     alert("📦 已將方塊存入暫存箱！請回答下一題取得新方塊！");
     openQuiz();
   } else {
-    const confirmSwap = confirm("📦 暫存箱已有方塊！\n是否要將【當前方塊】與【暫存箱方塊】交換？");
-    if (confirmSwap) {
+    if (confirm("📦 暫存箱已有方塊！\n是否要將【當前方塊】與【暫存箱方塊】交換？")) {
       const oldType = player.type;
       player.type = holdPieceType;
       player.matrix = createPiece(holdPieceType);
@@ -703,7 +846,6 @@ function handleHoldPiece() {
   }
 }
 
-/* ==================== 5. 到底放置防誤觸 ==================== */
 function requestHardDrop() {
   if (gamePaused || !player.matrix) return;
   document.getElementById("drop-confirm-modal").style.display = "flex";
@@ -723,7 +865,7 @@ function executeHardDrop() {
   draw();
 }
 
-/* ==================== 6. 出題與作答 ==================== */
+/* ==================== 7. 出題與作答 ==================== */
 function onDifficultyFilterChange() {
   selectedMinDiff = Number(document.getElementById("user-diff-select").value);
   loadQuestion();
@@ -740,11 +882,8 @@ function pickNextQuestion() {
   }
 
   let pool = questions.filter(q => {
-    const meetDiff = Number(q.difficulty) >= selectedMinDiff;
-    const notMastered = (qMasteryStats[q.id] || 0) < MAX_CORRECT_PER_Q;
-    return meetDiff && notMastered;
+    return Number(q.difficulty) >= selectedMinDiff && (qMasteryStats[q.id] || 0) < MAX_CORRECT_PER_Q;
   });
-
   if (pool.length === 0) return null;
   return { qData: pool[Math.floor(Math.random() * pool.length)], isReview: false };
 }
@@ -774,11 +913,9 @@ function loadQuestion() {
 
   const curMastery = qMasteryStats[qData.id] || 0;
   const hintEl = document.getElementById("q-mastery-hint");
-  if (result.isReview) {
-    hintEl.innerHTML = `<b style="color:#ff5252;">⚠️ [錯題重點複習]</b> 已答對: ${curMastery}/5次`;
-  } else {
-    hintEl.innerText = `已答對: ${curMastery}/5次 (滿5次淘汰)`;
-  }
+  hintEl.innerHTML = result.isReview ? 
+    `<b style="color:#ff5252;">⚠️ [錯題重點複習]</b> 已答對: ${curMastery}/5次` : 
+    `已答對: ${curMastery}/5次 (滿5次淘汰)`;
 
   document.getElementById("q-title").innerText = `Q: ${qData.q}`;
   const imgEl = document.getElementById("q-image");
@@ -832,8 +969,7 @@ function checkTypeAnswer() {
   document.getElementById("type-submit-btn").disabled = true;
 
   const acceptedAnswers = qData.ans.split(",").map(a => a.trim().toLowerCase()).filter(Boolean);
-  const isRight = acceptedAnswers.includes(userText);
-  processAnswerResult(isRight, qData.ans);
+  processAnswerResult(acceptedAnswers.includes(userText), qData.ans);
 }
 
 function processAnswerResult(isRight, correctAnswerText) {
@@ -850,12 +986,13 @@ function processAnswerResult(isRight, correctAnswerText) {
     showFloatingScore(diff.score, `難度加分`);
 
     qMasteryStats[qData.id] = (qMasteryStats[qData.id] || 0) + 1;
-    const curMastery = qMasteryStats[qData.id];
-    let retirementMsg = (curMastery >= MAX_CORRECT_PER_Q) ? " 🎓 [此題已滿5次精通淘汰！]" : "";
+    let retirementMsg = (qMasteryStats[qData.id] >= MAX_CORRECT_PER_Q) ? " 🎓 [此題已滿5次精通淘汰！]" : "";
 
     feedback.style.color = "#4caf50";
     feedback.innerText = `🎉 答對了！獲得【+${diff.score}分】並取得隨機方塊！${retirementMsg}`;
     nextBtn.innerText = "開始放置方塊 ➡️";
+
+    checkMilestoneAlerts();
   } else {
     answeredCorrectly = false;
     const qShort = qData.q.length > 6 ? qData.q.substring(0, 6) + "..." : qData.q;
@@ -864,11 +1001,9 @@ function processAnswerResult(isRight, correctAnswerText) {
     if (!pendingReviewQIds.includes(qData.id)) pendingReviewQIds.push(qData.id);
 
     feedback.style.color = "#f44336";
-    if (qData.showAnswer) {
-      feedback.innerText = `❌ 答錯了！正確答案是：【${correctAnswerText}】。\n解析：${qData.explanation}`;
-    } else {
-      feedback.innerText = "❌ 答錯了！此題為思考題不公開答案，稍後將再次重現！";
-    }
+    feedback.innerText = qData.showAnswer ? 
+      `❌ 答錯了！正確答案是：【${correctAnswerText}】。\n解析：${qData.explanation}` : 
+      "❌ 答錯了！此題為思考題不公開答案，稍後將再次重現！";
     nextBtn.innerText = "下一題 ➡️";
   }
   nextBtn.style.display = "block";
@@ -908,7 +1043,7 @@ function saveAndExit() {
   location.reload();
 }
 
-/* ==================== 7. 教師後台 ==================== */
+/* ==================== 8. 教師管理後台 ==================== */
 function openAdmin() {
   document.getElementById("admin-modal").style.display = "flex";
   fetchClassScores();
@@ -992,13 +1127,8 @@ async function deleteQuestionItem(qId) {
 
 function toggleAdminQuestionType() {
   const type = document.getElementById("adm-type").value;
-  if (type === "choice") {
-    document.getElementById("adm-choice-box").style.display = "block";
-    document.getElementById("adm-text-box").style.display = "none";
-  } else {
-    document.getElementById("adm-choice-box").style.display = "none";
-    document.getElementById("adm-text-box").style.display = "block";
-  }
+  document.getElementById("adm-choice-box").style.display = (type === "choice") ? "block" : "none";
+  document.getElementById("adm-text-box").style.display = (type === "choice") ? "none" : "block";
 }
 
 async function fetchClassScores() {
@@ -1033,9 +1163,7 @@ async function fetchClassScores() {
         tbody.appendChild(tr);
       });
     }
-  } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="5" style="color:red;">載入失敗！</td></tr>`;
-  }
+  } catch (err) { tbody.innerHTML = `<tr><td colspan="5" style="color:red;">載入失敗！</td></tr>`; }
 }
 
 async function deleteStudentRecord(email, name) {
@@ -1049,7 +1177,7 @@ async function deleteStudentRecord(email, name) {
   updateSideLeaderboard();
 }
 
-/* ==================== 8. Excel 批次處理 ==================== */
+/* ==================== 9. Excel 批次處理 ==================== */
 function downloadExcelTemplate() {
   const templateData = [
     ["題目文字", "圖片網址(可留空)", "選項1", "選項2", "選項3", "選項4", "正確答案(選擇題填1-4/打字題填文字)", "是否公布解答(TRUE/FALSE)", "解析內容", "難度等級(1簡單-5地獄)", "題型(choice/text)"],
@@ -1107,7 +1235,6 @@ function processExcelUpload() {
         body: JSON.stringify({ action: "batchAddQuestions", questions: parsedQuestions })
       });
       const resData = await res.json();
-
       if (resData.status === "batch_added") {
         statusEl.innerHTML = `<b style="color:#4caf50;">🎉 成功批次匯入 ${resData.count} 道題目！</b>`;
         fileInput.value = "";
@@ -1130,9 +1257,7 @@ async function submitNewQuestion() {
   const show = document.getElementById("adm-show").value === "true";
   const exp = document.getElementById("adm-exp").value.trim();
 
-  let ans = "";
-  let options = ["", "", "", ""];
-
+  let ans = "", options = ["", "", "", ""];
   if (type === "choice") {
     options = [
       document.getElementById("adm-opt1").value.trim(),
@@ -1167,7 +1292,7 @@ function startTeacherTest() {
   openQuiz();
 }
 
-/* ==================== 9. 排行榜與自動存檔 ==================== */
+/* ==================== 10. 排行榜與自動存檔 ==================== */
 async function updateSideLeaderboard() {
   const box = document.getElementById("rank-list-box");
   try {
@@ -1207,12 +1332,14 @@ function autoSaveToCloud() {
       score: totalScore, correctCount: correctCount,
       wrongList: wrongText, arena: arena,
       qMastery: qMasteryStats,
-      holdPiece: holdPieceType || ""
+      holdPiece: holdPieceType || "",
+      claimedMilestones: claimedMilestones,
+      inventory: studentInventory
     })
   }).then(() => updateSideLeaderboard());
 }
 
-/* ==================== 10. 方塊核心引擎 ==================== */
+/* ==================== 11. 方塊核心引擎 ==================== */
 const canvas = document.getElementById("tetris");
 const context = canvas.getContext("2d");
 context.scale(20, 20);
@@ -1341,6 +1468,7 @@ function checkAndAnimateClear(callback) {
       updateScoreUI();
       showFloatingScore(earned, `${multiplier}倍加乘`);
       autoSaveToCloud();
+      checkMilestoneAlerts();
 
       setTimeout(callback, 800);
     }
@@ -1408,21 +1536,18 @@ document.addEventListener('keydown', e => {
   else if (e.code === "Space") requestHardDrop();
 });
 
-/* ==================== 11. 手機長按控制器 ==================== */
+/* ==================== 12. 長按連發控制器 ==================== */
 function bindContinuousPress(buttonId, actionFn, initialDelay = 180, repeatInterval = 60) {
   const btn = document.getElementById(buttonId);
   if (!btn) return;
-  let timeoutId = null;
-  let intervalId = null;
+  let timeoutId = null, intervalId = null;
 
   const start = (e) => {
     if (e.cancelable) e.preventDefault();
     actionFn();
     clearTimeout(timeoutId);
     clearInterval(intervalId);
-    timeoutId = setTimeout(() => {
-      intervalId = setInterval(actionFn, repeatInterval);
-    }, initialDelay);
+    timeoutId = setTimeout(() => { intervalId = setInterval(actionFn, repeatInterval); }, initialDelay);
   };
 
   const stop = () => {
