@@ -14,17 +14,17 @@
     * { box-sizing: border-box; touch-action: manipulation; -webkit-touch-callout: none; }
     
     html, body {
-      width: 100%; height: 100%; height: 100dvh;
+      width: 100%; height: 100%; height: 100vh; height: 100dvh;
       margin: 0; padding: 0; background: #121212; color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overflow: hidden; display: flex; flex-direction: column;
       justify-content: space-between; align-items: center;
     }
 
-    /* 頂部資訊列 (緊湊) */
+    /* 頂部資訊列 */
     #top-bar {
-      width: 100%; padding: 4px 8px; display: flex;
-      flex-direction: column; align-items: center; z-index: 10;
+      flex-shrink: 0; width: 100%; padding: 4px 8px;
+      display: flex; flex-direction: column; align-items: center; z-index: 10;
     }
     #score-board { font-size: 0.95rem; color: #ffeb3b; font-weight: bold; }
     .top-bar-btn {
@@ -32,21 +32,22 @@
       border-radius: 20px; font-size: 0.75rem; margin-top: 2px; cursor: pointer; font-weight: bold;
     }
 
-    /* 中間主舞台：最大化利用垂直高度！ */
+    /* 中間主舞台 */
     #main-stage {
-      flex: 1; width: 100%; display: flex; gap: 8px;
-      justify-content: center; align-items: center; padding: 4px 8px;
+      flex: 1; width: 100%; display: flex; gap: 10px;
+      justify-content: center; align-items: center; padding: 2px 8px;
       overflow: hidden; min-height: 0;
     }
 
-    /* 左側欄 (瘦身，寬度縮至 95px，把空間全讓給棋盤) */
+    /* 左側欄 (鎖定 95px 寬度) */
     #left-side-col {
-      display: flex; flex-direction: column; gap: 6px; width: 95px;
-      justify-content: center; height: 100%;
+      width: 95px; min-width: 95px; max-width: 95px;
+      flex-shrink: 0 !important;
+      display: flex; flex-direction: column; gap: 6px; justify-content: center;
     }
     #side-leaderboard {
       background: #222; border: 1.5px solid #444; border-radius: 6px;
-      padding: 4px 3px; font-size: 0.68rem; text-align: left;
+      padding: 4px; font-size: 0.7rem; text-align: left;
     }
     .rank-item {
       display: flex; justify-content: space-between; align-items: center;
@@ -54,7 +55,7 @@
     }
     .rank-item:last-child { border-bottom: none; }
     .rank-name {
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 52px;
     }
 
     #hold-box-container {
@@ -63,20 +64,30 @@
     }
     #hold-canvas {
       background: #000; border: 1px solid #333; border-radius: 4px;
-      margin: 2px auto; display: block;
+      margin: 3px auto; display: block;
     }
     .hold-btn {
       background: #0288d1; color: white; border: none; border-radius: 4px;
-      padding: 3px; font-size: 0.68rem; width: 100%; cursor: pointer; font-weight: bold;
+      padding: 4px; font-size: 0.7rem; width: 100%; cursor: pointer; font-weight: bold;
     }
 
-    /* 俄羅斯方塊棋盤：解除限制，強制吃滿中間所有剩餘高度！ */
+    /* 【新增】暫存方塊下方的「積分成就」按鈕 */
+    .reward-entry-btn {
+      background: linear-gradient(135deg, #ff8f00, #ff6f00);
+      color: #fff; border: 1.5px solid #ffb300; border-radius: 6px;
+      padding: 6px 2px; font-size: 0.72rem; width: 100%; cursor: pointer;
+      font-weight: bold; box-shadow: 0 2px 6px rgba(255,143,0,0.4);
+      display: flex; align-items: center; justify-content: center; gap: 3px;
+    }
+    .reward-entry-btn:active { transform: scale(0.96); }
+
+    /* 棋盤標準尺寸 */
     #game-container { 
       position: relative; border: 3px solid #555; background: #000;
-      height: 98%; max-height: calc(100dvh - 240px); aspect-ratio: 12 / 20;
+      width: 216px; height: 360px; flex-shrink: 0 !important;
       border-radius: 6px; overflow: hidden; display: flex; justify-content: center;
     }
-    canvas#tetris { width: 100%; height: 100%; object-fit: contain; display: block; }
+    canvas#tetris { width: 100%; height: 100%; display: block; }
     
     #float-score {
       position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
@@ -86,31 +97,30 @@
     }
     #float-score.show { transform: translate(-50%, -120%); opacity: 1; }
 
-    /* 控制按鈕區：方向鍵向上提，到底放置拉開大距離！ */
+    /* 控制按鈕區 */
     #mobile-controls {
-      width: 100%; max-width: 360px; padding: 4px 12px calc(12px + env(safe-area-inset-bottom));
+      flex-shrink: 0 !important; width: 100%; max-width: 350px;
+      padding: 4px 12px calc(12px + env(safe-area-inset-bottom));
       display: flex; flex-direction: column;
     }
-    
-    /* 上排方向鍵 */
     #dir-pad {
       display: grid; grid-template-columns: repeat(4, 1fr);
       gap: 10px; width: 100%;
     }
     .ctrl-btn {
+      height: 52px; line-height: 48px;
       background: #2a2a2a; color: white; border: 2px solid #555;
-      border-radius: 12px; padding: 15px 0; font-size: 1.45rem; user-select: none;
-      box-shadow: 0 4px #111;
+      border-radius: 12px; font-size: 1.45rem; user-select: none;
+      box-shadow: 0 3px #111;
     }
-    .ctrl-btn:active { background: #444; transform: translateY(2px); box-shadow: 0 2px #111; }
+    .ctrl-btn:active { background: #444; transform: translateY(2px); box-shadow: 0 1px #111; }
     
-    /* 到底放置按鈕：依照您的標註，與上方方向鍵大幅拉開 28px 緩衝區！ */
     .drop-btn {
-      width: 100%; background: #d32f2f; font-weight: bold; color: white;
-      font-size: 1.15rem; padding: 14px 0; margin-top: 28px; border-radius: 10px;
-      border: 2px solid #b71c1c; box-shadow: 0 4px #7f0000; cursor: pointer;
+      height: 46px; width: 100%; background: #d32f2f; font-weight: bold; color: white;
+      font-size: 1.1rem; margin-top: 24px; border-radius: 10px;
+      border: 2px solid #b71c1c; box-shadow: 0 3px #7f0000; cursor: pointer;
     }
-    .drop-btn:active { background: #b71c1c; transform: translateY(2px); box-shadow: 0 2px #500; }
+    .drop-btn:active { background: #b71c1c; transform: translateY(2px); box-shadow: 0 1px #500; }
 
     /* 彈窗樣式 */
     .modal {
@@ -119,7 +129,7 @@
       justify-content: center; align-items: center; z-index: 100;
     }
     .modal-box {
-      background: #262626; padding: 20px; border-radius: 12px;
+      background: #262626; padding: 18px; border-radius: 12px;
       width: 92%; max-width: 520px; text-align: left; max-height: 85vh; overflow-y: auto;
     }
     .option-btn {
@@ -161,6 +171,44 @@
       background: #4caf50; color: white; border: none; border-radius: 4px;
       padding: 3px 6px; font-size: 0.75rem; cursor: pointer;
     }
+
+    /* ==================== 科技風成就表單專屬樣式 ==================== */
+    #reward-box {
+      border-radius: 14px; padding: 14px 12px; max-width: 440px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8); transition: all 0.3s;
+    }
+    /* 五頁不同的主題外框發光色調 */
+    .reward-theme-1 { background: #051329; border: 2.5px solid #00e5ff; box-shadow: 0 0 15px rgba(0,229,255,0.3) !important; }
+    .reward-theme-2 { background: #052414; border: 2.5px solid #00e676; box-shadow: 0 0 15px rgba(0,230,118,0.3) !important; }
+    .reward-theme-3 { background: #261802; border: 2.5px solid #ffd600; box-shadow: 0 0 15px rgba(255,214,0,0.3) !important; }
+    .reward-theme-4 { background: #24050d; border: 2.5px solid #ff1744; box-shadow: 0 0 15px rgba(255,23,68,0.3) !important; }
+    .reward-theme-5 { background: #1c0529; border: 2.5px solid #e040fb; box-shadow: 0 0 15px rgba(224,64,251,0.3) !important; }
+
+    .reward-header {
+      text-align: center; font-size: 1.15rem; font-weight: bold;
+      letter-spacing: 1px; padding: 4px 10px; margin-bottom: 8px;
+      border-radius: 6px; display: inline-block; width: 100%;
+    }
+    .table-reward {
+      width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-bottom: 12px;
+    }
+    .table-reward tr { border-bottom: 1px solid rgba(255,255,255,0.12); }
+    .table-reward td { padding: 6px 4px; text-align: left; }
+    .score-target { font-weight: bold; color: #fff; width: 28%; white-space: nowrap; }
+    .reward-desc { width: 52%; line-height: 1.3; }
+    .reward-badge { width: 20%; text-align: right; font-weight: bold; white-space: nowrap; }
+    
+    .nav-btn-group {
+      display: flex; gap: 8px; justify-content: space-between; align-items: center;
+    }
+    .page-nav-btn {
+      padding: 9px 16px; border: none; border-radius: 6px; font-weight: bold;
+      font-size: 0.85rem; cursor: pointer; flex: 1; text-align: center; color: white;
+    }
+    .close-reward-btn {
+      padding: 9px 14px; background: #424242; color: #eee; border: 1px solid #666;
+      border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -171,9 +219,10 @@
     <div id="score-board">選手: <span id="display-name">-</span> | 累計總分: <span id="score">0</span></div>
   </div>
 
-  <!-- 2. 中間主舞台 (棋盤極大化) -->
+  <!-- 2. 中間主舞台 -->
   <div id="main-stage">
     <div id="left-side-col">
+      <!-- 風雲榜 -->
       <div id="side-leaderboard">
         <div style="font-weight:bold; color:#ffeb3b; border-bottom:1px solid #555; padding-bottom:2px; margin-bottom:3px; text-align:center;">
           🏆 班級風雲榜
@@ -181,21 +230,25 @@
         <div id="rank-list-box"><div style="color:#aaa; text-align:center;">載入中...</div></div>
       </div>
 
+      <!-- 暫存方塊箱 -->
       <div id="hold-box-container">
         <div style="font-size:0.68rem; color:#81d4fa; font-weight:bold;">📦 暫存方塊</div>
         <canvas id="hold-canvas" width="45" height="45"></canvas>
         <button class="hold-btn" onclick="handleHoldPiece()">暫存 / 換塊</button>
       </div>
+
+      <!-- 【新增】暫存方塊正下方的「積分成就」按鈕 -->
+      <button class="reward-entry-btn" onclick="openRewardModal()">🏆 積分成就</button>
     </div>
 
-    <!-- 棋盤自動伸展填滿所有剩餘空間 -->
+    <!-- 棋盤標準尺寸 -->
     <div id="game-container">
       <canvas id="tetris" width="240" height="400"></canvas>
       <div id="float-score">+0</div>
     </div>
   </div>
 
-  <!-- 3. 控制按鈕區 (上下拉開 28px 大間距) -->
+  <!-- 3. 底部控制按鈕區 -->
   <div id="mobile-controls">
     <div id="dir-pad">
       <button class="ctrl-btn" id="btn-left">⬅️</button>
@@ -206,7 +259,23 @@
     <button class="drop-btn" onclick="requestHardDrop()">⚡ 到底放置</button>
   </div>
 
-  <!-- 登入與其他彈窗群保持完備 -->
+  <!-- ==================== 【新增】五頁積分成就表單彈窗 ==================== -->
+<!-- ==================== 圖片版五頁積分成就彈窗 ==================== -->
+  <div id="reward-modal" class="modal" style="display:none;">
+    <div class="modal-box" style="background:#0a0e17; border: 2px solid #00e5ff; border-radius: 14px; max-width: 440px; padding: 12px; text-align: center;">
+      <!-- 直接展示您的成就原圖 -->
+      <img id="reward-img" src="page1.png" style="width: 100%; border-radius: 8px; display: block; margin-bottom: 12px; box-shadow: 0 0 15px rgba(0,229,255,0.2);" alt="成就挑戰">
+
+      <!-- 翻頁與關閉控制按鈕群 -->
+      <div class="nav-btn-group" style="display:flex; gap:8px; justify-content:space-between; align-items:center;">
+        <button id="reward-prev-btn" class="page-nav-btn" style="background:#0288d1; display:none;" onclick="changeRewardPage(-1)">⬅️ 上一頁</button>
+        <button class="close-reward-btn" onclick="closeRewardModal()">關閉</button>
+        <button id="reward-next-btn" class="page-nav-btn" style="background:#00e5ff; color:#000;" onclick="changeRewardPage(1)">下一頁 ➡️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 登入與其他彈窗群 -->
   <div id="login-modal" class="modal">
     <div class="modal-box" style="text-align:center;">
       <h3>🎮 答題俄羅斯方塊</h3>
@@ -384,7 +453,7 @@ const TEACHER_EMAIL = "s256724@gmail.com";
 
 document.getElementById("g_id_onload").setAttribute("data-client_id", GOOGLE_CLIENT_ID);
 
-/* ==================== 2. 核心變數與邏輯 ==================== */
+/* ==================== 2. 核心變數 ==================== */
 let userEmail = "";
 let userName = "";
 let isTeacher = false;
@@ -416,6 +485,59 @@ const diffConfigs = {
   5: { name: "☠️ 地獄 (+5分)", class: "diff-5", score: 5 }
 };
 
+/* ==================== 【新增】五頁成就獎勵資料設定 ==================== */
+let currentRewardPageIndex = 0;
+
+// 5 頁圖片檔名清單（若您有放在圖床，也可以直接填網址 https://...）
+const rewardImages = [
+  "page1.png", // 第 1 頁：入門挑戰
+  "page2.png", // 第 2 頁：青銅與鐵銀
+  "page3.png", // 第 3 頁：黃金與寶石
+  "page4.png", // 第 4 頁：紅綠紫晶
+  "page5.png"  // 第 5 頁：至尊傳奇
+];
+
+function openRewardModal() {
+  currentRewardPageIndex = 0; // 預設打開第 1 頁
+  renderRewardPage(currentRewardPageIndex);
+  document.getElementById("reward-modal").style.display = "flex";
+}
+
+function closeRewardModal() {
+  document.getElementById("reward-modal").style.display = "none";
+}
+
+function changeRewardPage(delta) {
+  currentRewardPageIndex += delta;
+  if (currentRewardPageIndex < 0) currentRewardPageIndex = 0;
+  if (currentRewardPageIndex > 4) currentRewardPageIndex = 4;
+  renderRewardPage(currentRewardPageIndex);
+}
+
+function renderRewardPage(pageIdx) {
+  const imgEl = document.getElementById("reward-img");
+  imgEl.src = rewardImages[pageIdx];
+
+  const prevBtn = document.getElementById("reward-prev-btn");
+  const nextBtn = document.getElementById("reward-next-btn");
+
+  // 嚴格遵守各頁的按鈕要求：
+  // 第 1 頁：只有下一頁
+  // 第 2~4 頁：上一頁與下一頁
+  // 第 5 頁：只有上一頁
+  if (pageIdx === 0) {
+    prevBtn.style.display = "none";
+    nextBtn.style.display = "block";
+  } else if (pageIdx === 4) {
+    prevBtn.style.display = "block";
+    nextBtn.style.display = "none";
+  } else {
+    prevBtn.style.display = "block";
+    nextBtn.style.display = "block";
+  }
+}
+
+/* ==================== 3. Google 登入驗證 ==================== */
 function decodeJwt(token) {
   const base64Url = token.split('.')[1];
   const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -493,6 +615,10 @@ async function confirmStudentName() {
       if (data.wrongList && data.wrongList !== "無 (全對)") wrongQuestions = data.wrongList.split("; ");
       if (data.arena && data.arena.length > 0) arena = data.arena;
       if (data.qMastery) qMasteryStats = data.qMastery;
+      if (data.holdPiece) {
+        holdPieceType = data.holdPiece;
+        drawHoldCanvas();
+      }
     }
     document.getElementById("display-name").innerText = userName;
     updateScoreUI();
@@ -513,7 +639,7 @@ async function loadQuestionsFromCloud() {
   if (data.status === "success") questions = data.questions;
 }
 
-/* ==================== 3. 暫存方塊機制 ==================== */
+/* ==================== 4. 暫存方塊機制 ==================== */
 const holdCanvas = document.getElementById("hold-canvas");
 const holdCtx = holdCanvas.getContext("2d");
 holdCtx.scale(11, 11);
@@ -557,6 +683,7 @@ function handleHoldPiece() {
     player.matrix = null;
     gamePaused = true;
     draw();
+    autoSaveToCloud();
     alert("📦 已將方塊存入暫存箱！請回答下一題取得新方塊！");
     openQuiz();
   } else {
@@ -571,11 +698,12 @@ function handleHoldPiece() {
       drawHoldCanvas();
       hasUsedHoldThisRound = true;
       draw();
+      autoSaveToCloud();
     }
   }
 }
 
-/* ==================== 4. 到底放置防誤觸 ==================== */
+/* ==================== 5. 到底放置防誤觸 ==================== */
 function requestHardDrop() {
   if (gamePaused || !player.matrix) return;
   document.getElementById("drop-confirm-modal").style.display = "flex";
@@ -595,7 +723,7 @@ function executeHardDrop() {
   draw();
 }
 
-/* ==================== 5. 出題與作答 ==================== */
+/* ==================== 6. 出題與作答 ==================== */
 function onDifficultyFilterChange() {
   selectedMinDiff = Number(document.getElementById("user-diff-select").value);
   loadQuestion();
@@ -780,7 +908,7 @@ function saveAndExit() {
   location.reload();
 }
 
-/* ==================== 6. 教師後台 ==================== */
+/* ==================== 7. 教師後台 ==================== */
 function openAdmin() {
   document.getElementById("admin-modal").style.display = "flex";
   fetchClassScores();
@@ -921,7 +1049,7 @@ async function deleteStudentRecord(email, name) {
   updateSideLeaderboard();
 }
 
-/* ==================== 7. Excel 批次處理 ==================== */
+/* ==================== 8. Excel 批次處理 ==================== */
 function downloadExcelTemplate() {
   const templateData = [
     ["題目文字", "圖片網址(可留空)", "選項1", "選項2", "選項3", "選項4", "正確答案(選擇題填1-4/打字題填文字)", "是否公布解答(TRUE/FALSE)", "解析內容", "難度等級(1簡單-5地獄)", "題型(choice/text)"],
@@ -1039,7 +1167,7 @@ function startTeacherTest() {
   openQuiz();
 }
 
-/* ==================== 8. 排行榜與自動存檔 ==================== */
+/* ==================== 9. 排行榜與自動存檔 ==================== */
 async function updateSideLeaderboard() {
   const box = document.getElementById("rank-list-box");
   try {
@@ -1078,12 +1206,13 @@ function autoSaveToCloud() {
       action: "saveScore", email: userEmail, name: userName,
       score: totalScore, correctCount: correctCount,
       wrongList: wrongText, arena: arena,
-      qMastery: qMasteryStats
+      qMastery: qMasteryStats,
+      holdPiece: holdPieceType || ""
     })
   }).then(() => updateSideLeaderboard());
 }
 
-/* ==================== 9. 方塊核心引擎 ==================== */
+/* ==================== 10. 方塊核心引擎 ==================== */
 const canvas = document.getElementById("tetris");
 const context = canvas.getContext("2d");
 context.scale(20, 20);
@@ -1279,7 +1408,7 @@ document.addEventListener('keydown', e => {
   else if (e.code === "Space") requestHardDrop();
 });
 
-/* ==================== 10. 長按連發控制器 ==================== */
+/* ==================== 11. 手機長按控制器 ==================== */
 function bindContinuousPress(buttonId, actionFn, initialDelay = 180, repeatInterval = 60) {
   const btn = document.getElementById(buttonId);
   if (!btn) return;
