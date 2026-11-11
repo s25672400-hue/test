@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#121212">
+  <title>俄羅斯方塊學習 APP</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    * { box-sizing: border-box; touch-action: manipulation; -webkit-touch-callout: none; }
+    
+    html, body {
+      width: 100%; height: 100%; height: 100dvh;
+      margin: 0; padding: 0; background: #121212; color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden; display: flex; flex-direction: column;
+      justify-content: space-between; align-items: center;
+    }
+
+    /* 頂部資訊列 (緊湊) */
+    #top-bar {
+      width: 100%; padding: 4px 8px; display: flex;
+      flex-direction: column; align-items: center; z-index: 10;
+    }
+    #score-board { font-size: 0.95rem; color: #ffeb3b; font-weight: bold; }
+    .top-bar-btn {
+      display: none; color: white; border: none; padding: 3px 10px;
+      border-radius: 20px; font-size: 0.75rem; margin-top: 2px; cursor: pointer; font-weight: bold;
+    }
+
+    /* 中間主舞台：最大化利用垂直高度！ */
+    #main-stage {
+      flex: 1; width: 100%; display: flex; gap: 8px;
+      justify-content: center; align-items: center; padding: 4px 8px;
+      overflow: hidden; min-height: 0;
+    }
+
+    /* 左側欄 (瘦身，寬度縮至 95px，把空間全讓給棋盤) */
+    #left-side-col {
+      display: flex; flex-direction: column; gap: 6px; width: 95px;
+      justify-content: center; height: 100%;
+    }
+    #side-leaderboard {
+      background: #222; border: 1.5px solid #444; border-radius: 6px;
+      padding: 4px 3px; font-size: 0.68rem; text-align: left;
+    }
+    .rank-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 2px 0; border-bottom: 1px solid #333;
+    }
+    .rank-item:last-child { border-bottom: none; }
+    .rank-name {
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50px;
+    }
+
+    #hold-box-container {
+      background: #222; border: 1.5px solid #555; border-radius: 6px;
+      padding: 4px; text-align: center;
+    }
+    #hold-canvas {
+      background: #000; border: 1px solid #333; border-radius: 4px;
+      margin: 2px auto; display: block;
+    }
+    .hold-btn {
+      background: #0288d1; color: white; border: none; border-radius: 4px;
+      padding: 3px; font-size: 0.68rem; width: 100%; cursor: pointer; font-weight: bold;
+    }
+
+    /* 俄羅斯方塊棋盤：解除限制，強制吃滿中間所有剩餘高度！ */
+    #game-container { 
+      position: relative; border: 3px solid #555; background: #000;
+      height: 98%; max-height: calc(100dvh - 240px); aspect-ratio: 12 / 20;
+      border-radius: 6px; overflow: hidden; display: flex; justify-content: center;
+    }
+    canvas#tetris { width: 100%; height: 100%; object-fit: contain; display: block; }
+    
+    #float-score {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      font-size: 1.6rem; font-weight: bold; color: #ffeb3b;
+      text-shadow: 0 0 10px #ff5722, 0 0 20px #ff9800;
+      pointer-events: none; opacity: 0; transition: all 0.8s ease-out; z-index: 50; width: 100%;
+    }
+    #float-score.show { transform: translate(-50%, -120%); opacity: 1; }
+
+    /* 控制按鈕區：方向鍵向上提，到底放置拉開大距離！ */
+    #mobile-controls {
+      width: 100%; max-width: 360px; padding: 4px 12px calc(12px + env(safe-area-inset-bottom));
+      display: flex; flex-direction: column;
+    }
+    
+    /* 上排方向鍵 */
+    #dir-pad {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 10px; width: 100%;
+    }
+    .ctrl-btn {
+      background: #2a2a2a; color: white; border: 2px solid #555;
+      border-radius: 12px; padding: 15px 0; font-size: 1.45rem; user-select: none;
+      box-shadow: 0 4px #111;
+    }
+    .ctrl-btn:active { background: #444; transform: translateY(2px); box-shadow: 0 2px #111; }
+    
+    /* 到底放置按鈕：依照您的標註，與上方方向鍵大幅拉開 28px 緩衝區！ */
+    .drop-btn {
+      width: 100%; background: #d32f2f; font-weight: bold; color: white;
+      font-size: 1.15rem; padding: 14px 0; margin-top: 28px; border-radius: 10px;
+      border: 2px solid #b71c1c; box-shadow: 0 4px #7f0000; cursor: pointer;
+    }
+    .drop-btn:active { background: #b71c1c; transform: translateY(2px); box-shadow: 0 2px #500; }
+
+    /* 彈窗樣式 */
+    .modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); display: flex;
+      justify-content: center; align-items: center; z-index: 100;
+    }
+    .modal-box {
+      background: #262626; padding: 20px; border-radius: 12px;
+      width: 92%; max-width: 520px; text-align: left; max-height: 85vh; overflow-y: auto;
+    }
+    .option-btn {
+      width: 100%; margin: 8px 0; padding: 12px; font-size: 1rem;
+      border-radius: 6px; border: none; background: #0288d1; color: white;
+      text-align: left; cursor: pointer;
+    }
+    .option-btn:active { background: #01579b; }
+    .input-field {
+      width: 100%; padding: 10px; margin: 6px 0 14px; border-radius: 6px;
+      border: 1px solid #777; background: #333; color: white; font-size: 1rem;
+    }
+    .q-img { max-width: 100%; max-height: 140px; border-radius: 6px; margin: 8px 0; display: block; }
+
+    .diff-badge {
+      display: inline-block; padding: 3px 8px; border-radius: 10px;
+      font-size: 0.75rem; font-weight: bold; margin-bottom: 6px;
+    }
+    .diff-1 { background: #2e7d32; color: #fff; }
+    .diff-2 { background: #0288d1; color: #fff; }
+    .diff-3 { background: #ef6c00; color: #fff; }
+    .diff-4 { background: #7b1fa2; color: #fff; }
+    .diff-5 { background: #c2185b; color: #fff; }
+
+    .tab-bar { display: flex; border-bottom: 2px solid #444; margin-bottom: 12px; }
+    .tab-btn {
+      padding: 8px 6px; background: transparent; color: #aaa;
+      border: none; cursor: pointer; font-size: 0.85rem; font-weight: bold;
+    }
+    .tab-btn.active { color: #ffeb3b; border-bottom: 3px solid #ffeb3b; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.8rem; }
+    th, td { border: 1px solid #444; padding: 6px; text-align: center; vertical-align: middle; }
+    th { background: #333; color: #ffeb3b; }
+    .del-btn {
+      background: #d32f2f; color: white; border: none; border-radius: 4px;
+      padding: 3px 6px; font-size: 0.75rem; cursor: pointer;
+    }
+    .save-mini-btn {
+      background: #4caf50; color: white; border: none; border-radius: 4px;
+      padding: 3px 6px; font-size: 0.75rem; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. 頂部資訊列 -->
+  <div id="top-bar">
+    <button id="admin-entry-btn" class="top-bar-btn" style="background:#e91e63;" onclick="openAdmin()">⚙️ 教師管理戰報</button>
+    <div id="score-board">選手: <span id="display-name">-</span> | 累計總分: <span id="score">0</span></div>
+  </div>
+
+  <!-- 2. 中間主舞台 (棋盤極大化) -->
+  <div id="main-stage">
+    <div id="left-side-col">
+      <div id="side-leaderboard">
+        <div style="font-weight:bold; color:#ffeb3b; border-bottom:1px solid #555; padding-bottom:2px; margin-bottom:3px; text-align:center;">
+          🏆 班級風雲榜
+        </div>
+        <div id="rank-list-box"><div style="color:#aaa; text-align:center;">載入中...</div></div>
+      </div>
+
+      <div id="hold-box-container">
+        <div style="font-size:0.68rem; color:#81d4fa; font-weight:bold;">📦 暫存方塊</div>
+        <canvas id="hold-canvas" width="45" height="45"></canvas>
+        <button class="hold-btn" onclick="handleHoldPiece()">暫存 / 換塊</button>
+      </div>
+    </div>
+
+    <!-- 棋盤自動伸展填滿所有剩餘空間 -->
+    <div id="game-container">
+      <canvas id="tetris" width="240" height="400"></canvas>
+      <div id="float-score">+0</div>
+    </div>
+  </div>
+
+  <!-- 3. 控制按鈕區 (上下拉開 28px 大間距) -->
+  <div id="mobile-controls">
+    <div id="dir-pad">
+      <button class="ctrl-btn" id="btn-left">⬅️</button>
+      <button class="ctrl-btn" id="btn-right">➡️</button>
+      <button class="ctrl-btn" id="btn-down">⬇️</button>
+      <button class="ctrl-btn" id="btn-rotate">🔄</button>
+    </div>
+    <button class="drop-btn" onclick="requestHardDrop()">⚡ 到底放置</button>
+  </div>
+
+  <!-- 登入與其他彈窗群保持完備 -->
+  <div id="login-modal" class="modal">
+    <div class="modal-box" style="text-align:center;">
+      <h3>🎮 答題俄羅斯方塊</h3>
+      <p style="font-size:0.85rem; color:#aaa; margin-bottom:15px;">請使用 Google 帳號登入驗證身分：</p>
+      <div id="g_id_onload" data-auto_prompt="false" data-callback="handleGoogleLogin"></div>
+      <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with"></div>
+      <div id="login-status" style="margin-top:12px; color:#81d4fa; font-size:0.85rem;"></div>
+    </div>
+  </div>
+
+  <div id="name-modal" class="modal" style="display:none;">
+    <div class="modal-box" style="text-align:center;">
+      <h3 style="color:#4caf50;">✅ Google 帳號驗證成功！</h3>
+      <p style="font-size:0.85rem; color:#aaa; text-align:left;">請輸入您的<strong>班級、座號與真實姓名</strong>：</p>
+      <input type="text" id="custom-name-input" class="input-field" placeholder="例如：302 05號 林小美">
+      <button class="option-btn" style="text-align:center; background:#4caf50; font-weight:bold;" onclick="confirmStudentName()">進入挑戰 ➡️</button>
+    </div>
+  </div>
+
+  <div id="quiz-modal" class="modal" style="display:none;">
+    <div class="modal-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:#333; padding:5px 8px; border-radius:6px;">
+        <span style="font-size:0.75rem; color:#ffeb3b; font-weight:bold;">🎯 出題最低門檻：</span>
+        <select id="user-diff-select" style="background:#222; color:#fff; border:1px solid #666; border-radius:4px; padding:2px 4px; font-size:0.75rem;" onchange="onDifficultyFilterChange()">
+          <option value="1">🌱 簡單以上 (全部)</option>
+          <option value="2">📘 普通以上</option>
+          <option value="3">⚡ 難以上</option>
+          <option value="4">🔥 非常難與地獄</option>
+          <option value="5">☠️ 僅地獄級</option>
+        </select>
+      </div>
+
+      <div id="q-diff-badge" class="diff-badge">難度載入中</div>
+      <span id="q-mastery-hint" style="font-size:0.72rem; color:#aaa; margin-left:6px;"></span>
+
+      <h3 id="q-title" style="margin-top:3px; font-size:1.1rem;">題目載入中...</h3>
+      <img id="q-image" class="q-img" style="display:none;" />
+      
+      <div id="options-container"></div>
+      <div id="typing-container" style="display:none;">
+        <input type="text" id="type-answer-input" class="input-field" placeholder="請在此打字輸入答案..." autocomplete="off">
+        <button id="type-submit-btn" class="option-btn" style="text-align:center; background:#ff9800; font-weight:bold;" onclick="checkTypeAnswer()">送出答案 🚀</button>
+      </div>
+
+      <div id="feedback" style="margin-top:8px; font-weight:bold; line-height:1.4;"></div>
+      <button id="after-answer-btn" class="option-btn" style="display:none; text-align:center; background:#4caf50;" onclick="handleAfterAnswer()">繼續 ➡️</button>
+    </div>
+  </div>
+
+  <div id="turn-modal" class="modal" style="display:none; align-items:flex-start; padding-top:40px;">
+    <div class="modal-box" style="text-align:center;">
+      <h3 style="color:#ffeb3b; margin:0 0 5px;">🎯 方塊已就位！</h3>
+      <p style="margin:5px 0 10px;">目前累積總分：<b id="turn-score" style="font-size:1.3rem; color:#4caf50;">0</b> 分</p>
+      <button class="option-btn" style="text-align:center; background:#4caf50;" onclick="continueToNextQuiz()">繼續挑戰下一題 ➡️</button>
+      <button id="turn-save-btn" class="option-btn" style="text-align:center; background:#ff9800;" onclick="saveAndExit()">💾 儲存並退出</button>
+    </div>
+  </div>
+
+  <div id="drop-confirm-modal" class="modal" style="display:none; align-items:flex-start; padding-top:60px;">
+    <div class="modal-box" style="text-align:center; max-width:320px;">
+      <h3 style="color:#f44336; margin:0 0 10px;">⚠️ 確認到底放置？</h3>
+      <p style="font-size:0.85rem; color:#ccc; margin-bottom:15px;">方塊將直接落到底部固定。</p>
+      <div style="display:flex; gap:10px;">
+        <button class="option-btn" style="text-align:center; background:#d32f2f; margin:0; flex:1; font-weight:bold;" onclick="confirmHardDrop()">確定到底</button>
+        <button class="option-btn" style="text-align:center; background:#555; margin:0; flex:1;" onclick="cancelHardDrop()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-modal" class="modal" style="display:none;">
+    <div class="modal-box">
+      <div class="tab-bar" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <button class="tab-btn active" onclick="switchAdminTab('scores')">📊 全班戰況</button>
+          <button class="tab-btn" onclick="switchAdminTab('editQ')">📚 題庫檢視/改難度</button>
+          <button class="tab-btn" onclick="switchAdminTab('importExcel')">📑 批次匯入Excel</button>
+          <button class="tab-btn" onclick="switchAdminTab('addQ')">➕ 單題新增</button>
+        </div>
+        <button style="background:#d32f2f; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;" onclick="logoutTeacher()">🚪 登出</button>
+      </div>
+
+      <div id="tab-scores">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.8rem; color:#aaa;">全班作答即時排行榜：</span>
+          <button style="padding:4px 8px; font-size:0.75rem; background:#0288d1; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="fetchClassScores()">🔄 刷新榜單</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr><th>姓名</th><th>總分</th><th>答對</th><th>錯題紀錄</th><th>操作</th></tr>
+            </thead>
+            <tbody id="scores-tbody"><tr><td colspan="5">讀取戰況中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="tab-editQ" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.8rem; color:#aaa;">可直接在此調整題目難度或刪除題目：</span>
+          <button style="padding:4px 8px; font-size:0.75rem; background:#0288d1; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="renderAdminQuestionsList()">🔄 刷新題庫</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr><th style="width:10%;">題號</th><th style="width:45%;">題目內容</th><th style="width:25%;">難度等級</th><th style="width:20%;">操作</th></tr>
+            </thead>
+            <tbody id="admin-q-tbody"><tr><td colspan="4">載入題庫中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="tab-importExcel" style="display:none; text-align:left;">
+        <h4 style="margin:5px 0 10px; color:#ffeb3b;">📑 Excel (.xlsx) 題庫批次上傳</h4>
+        <p style="font-size:0.8rem; color:#aaa; line-height:1.4;">直接上傳整份 Excel 題庫，系統自動寫入雲端試算表：</p>
+        <button class="option-btn" style="text-align:center; background:#673ab7; margin-bottom:12px; padding:10px;" onclick="downloadExcelTemplate()">📥 下載標準出題 Excel 範本</button>
+        <input type="file" id="excel-file-input" accept=".xlsx, .xls" class="input-field" style="background:#222;">
+        <button class="option-btn" style="text-align:center; background:#4caf50; font-weight:bold;" onclick="processExcelUpload()">🚀 開始批次匯入至題庫</button>
+        <div id="import-status" style="margin-top:6px; font-size:0.8rem;"></div>
+      </div>
+
+      <div id="tab-addQ" style="display:none;">
+        <label>題目難易度：</label>
+        <select id="adm-diff" class="input-field">
+          <option value="1">🌱 簡單（+1分）</option>
+          <option value="2" selected>📘 普通（+2分）</option>
+          <option value="3">⚡ 難（+3分）</option>
+          <option value="4">🔥 非常難（+4分）</option>
+          <option value="5">☠️ 地獄（+5分）</option>
+        </select>
+        <label>題型種類：</label>
+        <select id="adm-type" class="input-field" onchange="toggleAdminQuestionType()">
+          <option value="choice">四選一選擇題</option>
+          <option value="text">學生打字填空題</option>
+        </select>
+        <label>題目內容：</label>
+        <input type="text" id="adm-q" class="input-field" placeholder="題目文字...">
+        <label>圖片網址（可選）：</label>
+        <input type="text" id="adm-img" class="input-field" placeholder="https://.../photo.png">
+        <div id="adm-choice-box">
+          <label>選項 1 ~ 4：</label>
+          <input type="text" id="adm-opt1" class="input-field" placeholder="選項 1">
+          <input type="text" id="adm-opt2" class="input-field" placeholder="選項 2">
+          <input type="text" id="adm-opt3" class="input-field" placeholder="選項 3">
+          <input type="text" id="adm-opt4" class="input-field" placeholder="選項 4">
+          <label>正確選項：</label>
+          <select id="adm-ans-choice" class="input-field">
+            <option value="1">選項 1</option><option value="2">選項 2</option><option value="3">選項 3</option><option value="4">選項 4</option>
+          </select>
+        </div>
+        <div id="adm-text-box" style="display:none;">
+          <label>正確答案（多個正解用逗號分隔）：</label>
+          <input type="text" id="adm-ans-text" class="input-field" placeholder="例如：玉山, Mt. Jade">
+        </div>
+        <label>答錯時是否公布解答？</label>
+        <select id="adm-show" class="input-field">
+          <option value="true">公布正解與解析</option><option value="false">不公布</option>
+        </select>
+        <label>解析說明：</label>
+        <input type="text" id="adm-exp" class="input-field" placeholder="解析內容...">
+        <button class="option-btn" style="text-align:center; background:#e91e63;" onclick="submitNewQuestion()">➕ 寫入雲端題庫</button>
+      </div>
+
+      <div style="margin-top:12px; display:flex; gap:10px;">
+        <button class="option-btn" style="text-align:center; background:#4caf50; flex:1;" onclick="startTeacherTest()">🎮 進入試玩測試</button>
+        <button class="option-btn" style="text-align:center; background:#555; flex:1;" onclick="closeAdmin()">關閉後台</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ==================== 1. 老師設定區 ==================== */
+const GOOGLE_CLIENT_ID = "479239925260-p9kvntbmlp23ginho02tou72ckg0n9f1.apps.googleusercontent.com";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzWLVLbAAVd3rGVktP08gluiIqzSn4xSl-0QFRZF8wNcEqCN9d-MFeEX8YO3MIEFJOV/exec";
+const TEACHER_EMAIL = "s256724@gmail.com";
+
+document.getElementById("g_id_onload").setAttribute("data-client_id", GOOGLE_CLIENT_ID);
+
+/* ==================== 2. 核心變數與邏輯 ==================== */
+let userEmail = "";
+let userName = "";
+let isTeacher = false;
+let questions = [];
+let currentQuestion = null;
+let totalScore = 0;
+let correctCount = 0;
+let answeredCorrectly = false;
+let arena = createMatrix(12, 20);
+let gamePaused = true;
+let wrongQuestions = [];
+
+let qMasteryStats = {}; 
+let pendingReviewQIds = []; 
+let roundCounter = 0;
+let selectedMinDiff = 1;
+
+let holdPieceType = null;
+let hasUsedHoldThisRound = false;
+
+const MAX_CORRECT_PER_Q = 5; 
+const REVIEW_INTERVAL = 2;   
+
+const diffConfigs = {
+  1: { name: "🌱 簡單 (+1分)", class: "diff-1", score: 1 },
+  2: { name: "📘 普通 (+2分)", class: "diff-2", score: 2 },
+  3: { name: "⚡ 難 (+3分)", class: "diff-3", score: 3 },
+  4: { name: "🔥 非常難 (+4分)", class: "diff-4", score: 4 },
+  5: { name: "☠️ 地獄 (+5分)", class: "diff-5", score: 5 }
+};
+
+function decodeJwt(token) {
+  const base64Url = token.split('.')[1];
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  return JSON.parse(decodeURIComponent(escape(window.atob(base64))));
+}
+
+async function handleGoogleLogin(response) {
+  const payload = decodeJwt(response.credential);
+  userEmail = payload.email.toLowerCase();
+  userName = payload.name;
+  isTeacher = (userEmail === TEACHER_EMAIL.toLowerCase());
+
+  document.getElementById("login-status").innerText = "驗證成功，正在同步雲端資料...";
+  await loadQuestionsFromCloud();
+
+  if (isTeacher) {
+    localStorage.setItem("remembered_teacher", JSON.stringify({ email: userEmail, name: userName }));
+    document.getElementById("login-modal").style.display = "none";
+    document.getElementById("admin-entry-btn").style.display = "inline-block";
+    document.getElementById("display-name").innerText = `${userName} (教師)`;
+    openAdmin();
+  } else {
+    localStorage.removeItem("remembered_teacher");
+    document.getElementById("login-modal").style.display = "none";
+    document.getElementById("custom-name-input").value = userName;
+    document.getElementById("name-modal").style.display = "flex";
+  }
+}
+
+function logoutTeacher() {
+  if (confirm("確定要登出老師身分嗎？")) {
+    localStorage.removeItem("remembered_teacher");
+    location.reload();
+  }
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+  const saved = localStorage.getItem("remembered_teacher");
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      if (data.email && data.email.toLowerCase() === TEACHER_EMAIL.toLowerCase()) {
+        userEmail = data.email;
+        userName = data.name;
+        isTeacher = true;
+        document.getElementById("login-modal").style.display = "none";
+        document.getElementById("admin-entry-btn").style.display = "inline-block";
+        document.getElementById("display-name").innerText = `${userName} (教師)`;
+        await loadQuestionsFromCloud();
+        openAdmin();
+      }
+    } catch (e) {
+      localStorage.removeItem("remembered_teacher");
+    }
+  }
+  updateSideLeaderboard();
+  drawHoldCanvas();
+});
+
+async function confirmStudentName() {
+  const inputName = document.getElementById("custom-name-input").value.trim();
+  if (!inputName) { alert("請輸入您的班級座號與姓名！"); return; }
+  userName = inputName;
+  document.getElementById("name-modal").style.display = "none";
+
+  try {
+    const res = await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "login", email: userEmail, name: userName })
+    });
+    const data = await res.json();
+    if (data.status === "success") {
+      totalScore = data.score;
+      correctCount = data.correctCount;
+      if (data.wrongList && data.wrongList !== "無 (全對)") wrongQuestions = data.wrongList.split("; ");
+      if (data.arena && data.arena.length > 0) arena = data.arena;
+      if (data.qMastery) qMasteryStats = data.qMastery;
+    }
+    document.getElementById("display-name").innerText = userName;
+    updateScoreUI();
+    draw();
+    openQuiz();
+    updateSideLeaderboard();
+  } catch (e) {
+    alert("連線失敗，請檢查網路！");
+  }
+}
+
+async function loadQuestionsFromCloud() {
+  const res = await fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "getQuestions" })
+  });
+  const data = await res.json();
+  if (data.status === "success") questions = data.questions;
+}
+
+/* ==================== 3. 暫存方塊機制 ==================== */
+const holdCanvas = document.getElementById("hold-canvas");
+const holdCtx = holdCanvas.getContext("2d");
+holdCtx.scale(11, 11);
+
+function drawHoldCanvas() {
+  holdCtx.fillStyle = '#000';
+  holdCtx.fillRect(0, 0, holdCanvas.width, holdCanvas.height);
+
+  if (holdPieceType) {
+    const matrix = createPiece(holdPieceType);
+    const offset = {
+      x: (4 - matrix[0].length) / 2,
+      y: (4 - matrix.length) / 2
+    };
+    matrix.forEach((row, y) => {
+      row.forEach((value, x) => {
+        if (value !== 0) {
+          holdCtx.fillStyle = colors[value];
+          holdCtx.fillRect(x + offset.x, y + offset.y, 1, 1);
+          holdCtx.lineWidth = 0.05;
+          holdCtx.strokeStyle = "#fff";
+          holdCtx.strokeRect(x + offset.x, y + offset.y, 1, 1);
+        }
+      });
+    });
+  }
+}
+
+function handleHoldPiece() {
+  if (gamePaused || !player.matrix) {
+    alert("目前沒有操作中的方塊可以暫存！"); return;
+  }
+  if (hasUsedHoldThisRound) {
+    alert("⚠️ 這回合已經使用過暫存機會囉！請先放置此方塊。"); return;
+  }
+
+  if (!holdPieceType) {
+    holdPieceType = player.type;
+    drawHoldCanvas();
+    hasUsedHoldThisRound = true;
+    player.matrix = null;
+    gamePaused = true;
+    draw();
+    alert("📦 已將方塊存入暫存箱！請回答下一題取得新方塊！");
+    openQuiz();
+  } else {
+    const confirmSwap = confirm("📦 暫存箱已有方塊！\n是否要將【當前方塊】與【暫存箱方塊】交換？");
+    if (confirmSwap) {
+      const oldType = player.type;
+      player.type = holdPieceType;
+      player.matrix = createPiece(holdPieceType);
+      player.pos.y = 0;
+      player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+      holdPieceType = oldType;
+      drawHoldCanvas();
+      hasUsedHoldThisRound = true;
+      draw();
+    }
+  }
+}
+
+/* ==================== 4. 到底放置防誤觸 ==================== */
+function requestHardDrop() {
+  if (gamePaused || !player.matrix) return;
+  document.getElementById("drop-confirm-modal").style.display = "flex";
+}
+function confirmHardDrop() {
+  document.getElementById("drop-confirm-modal").style.display = "none";
+  executeHardDrop();
+}
+function cancelHardDrop() {
+  document.getElementById("drop-confirm-modal").style.display = "none";
+}
+function executeHardDrop() {
+  if (gamePaused || !player.matrix) return;
+  while (!collide(arena, player)) player.pos.y++;
+  player.pos.y--;
+  lockPiece();
+  draw();
+}
+
+/* ==================== 5. 出題與作答 ==================== */
+function onDifficultyFilterChange() {
+  selectedMinDiff = Number(document.getElementById("user-diff-select").value);
+  loadQuestion();
+}
+
+function pickNextQuestion() {
+  roundCounter++;
+  if (pendingReviewQIds.length > 0 && (roundCounter % REVIEW_INTERVAL === 0)) {
+    const wrongQId = pendingReviewQIds.shift();
+    const foundWrongQ = questions.find(q => String(q.id) === String(wrongQId));
+    if (foundWrongQ && (qMasteryStats[foundWrongQ.id] || 0) < MAX_CORRECT_PER_Q) {
+      return { qData: foundWrongQ, isReview: true };
+    }
+  }
+
+  let pool = questions.filter(q => {
+    const meetDiff = Number(q.difficulty) >= selectedMinDiff;
+    const notMastered = (qMasteryStats[q.id] || 0) < MAX_CORRECT_PER_Q;
+    return meetDiff && notMastered;
+  });
+
+  if (pool.length === 0) return null;
+  return { qData: pool[Math.floor(Math.random() * pool.length)], isReview: false };
+}
+
+function openQuiz() {
+  document.getElementById("quiz-modal").style.display = "flex";
+  loadQuestion();
+}
+
+function loadQuestion() {
+  if (questions.length === 0) {
+    alert("題庫為空，請老師至後台新增題目！"); return;
+  }
+  const result = pickNextQuestion();
+  if (!result) {
+    alert(`🎉 難度【${selectedMinDiff}級以上】題目皆已達標通關！請切換其他難度！`);
+    return;
+  }
+
+  currentQuestion = result.qData;
+  const qData = currentQuestion;
+
+  const diff = diffConfigs[qData.difficulty] || diffConfigs[2];
+  const badge = document.getElementById("q-diff-badge");
+  badge.innerText = diff.name;
+  badge.className = `diff-badge ${diff.class}`;
+
+  const curMastery = qMasteryStats[qData.id] || 0;
+  const hintEl = document.getElementById("q-mastery-hint");
+  if (result.isReview) {
+    hintEl.innerHTML = `<b style="color:#ff5252;">⚠️ [錯題重點複習]</b> 已答對: ${curMastery}/5次`;
+  } else {
+    hintEl.innerText = `已答對: ${curMastery}/5次 (滿5次淘汰)`;
+  }
+
+  document.getElementById("q-title").innerText = `Q: ${qData.q}`;
+  const imgEl = document.getElementById("q-image");
+  if (qData.img) { imgEl.src = qData.img; imgEl.style.display = "block"; }
+  else { imgEl.style.display = "none"; }
+
+  document.getElementById("feedback").innerText = "";
+  document.getElementById("after-answer-btn").style.display = "none";
+
+  const optContainer = document.getElementById("options-container");
+  const typeContainer = document.getElementById("typing-container");
+
+  if (qData.type === "text") {
+    optContainer.style.display = "none";
+    typeContainer.style.display = "block";
+    const input = document.getElementById("type-answer-input");
+    input.value = "";
+    input.disabled = false;
+    document.getElementById("type-submit-btn").disabled = false;
+    setTimeout(() => input.focus(), 300);
+  } else {
+    typeContainer.style.display = "none";
+    optContainer.style.display = "block";
+    optContainer.innerHTML = "";
+    qData.options.forEach((opt, index) => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.innerText = `${index + 1}. ${opt}`;
+      btn.onclick = () => checkChoiceAnswer(index + 1);
+      optContainer.appendChild(btn);
+    });
+  }
+}
+
+document.getElementById("type-answer-input").addEventListener("keypress", function(e) {
+  if (e.key === "Enter") checkTypeAnswer();
+});
+
+function checkChoiceAnswer(chosenNum) {
+  const qData = currentQuestion;
+  document.querySelectorAll("#options-container .option-btn").forEach(b => b.disabled = true);
+  const isRight = (String(chosenNum) === String(qData.ans));
+  processAnswerResult(isRight, `選項 ${qData.ans}. ${qData.options[Number(qData.ans) - 1]}`);
+}
+
+function checkTypeAnswer() {
+  const qData = currentQuestion;
+  const userText = document.getElementById("type-answer-input").value.trim().toLowerCase();
+  if (!userText) { alert("請先輸入答案！"); return; }
+  document.getElementById("type-answer-input").disabled = true;
+  document.getElementById("type-submit-btn").disabled = true;
+
+  const acceptedAnswers = qData.ans.split(",").map(a => a.trim().toLowerCase()).filter(Boolean);
+  const isRight = acceptedAnswers.includes(userText);
+  processAnswerResult(isRight, qData.ans);
+}
+
+function processAnswerResult(isRight, correctAnswerText) {
+  const qData = currentQuestion;
+  const feedback = document.getElementById("feedback");
+  const nextBtn = document.getElementById("after-answer-btn");
+  const diff = diffConfigs[qData.difficulty] || diffConfigs[2];
+
+  if (isRight) {
+    correctCount++;
+    answeredCorrectly = true;
+    totalScore += diff.score;
+    updateScoreUI();
+    showFloatingScore(diff.score, `難度加分`);
+
+    qMasteryStats[qData.id] = (qMasteryStats[qData.id] || 0) + 1;
+    const curMastery = qMasteryStats[qData.id];
+    let retirementMsg = (curMastery >= MAX_CORRECT_PER_Q) ? " 🎓 [此題已滿5次精通淘汰！]" : "";
+
+    feedback.style.color = "#4caf50";
+    feedback.innerText = `🎉 答對了！獲得【+${diff.score}分】並取得隨機方塊！${retirementMsg}`;
+    nextBtn.innerText = "開始放置方塊 ➡️";
+  } else {
+    answeredCorrectly = false;
+    const qShort = qData.q.length > 6 ? qData.q.substring(0, 6) + "..." : qData.q;
+    const wrongInfo = `第${qData.id}題(${qShort})`;
+    if (!wrongQuestions.includes(wrongInfo)) wrongQuestions.push(wrongInfo);
+    if (!pendingReviewQIds.includes(qData.id)) pendingReviewQIds.push(qData.id);
+
+    feedback.style.color = "#f44336";
+    if (qData.showAnswer) {
+      feedback.innerText = `❌ 答錯了！正確答案是：【${correctAnswerText}】。\n解析：${qData.explanation}`;
+    } else {
+      feedback.innerText = "❌ 答錯了！此題為思考題不公開答案，稍後將再次重現！";
+    }
+    nextBtn.innerText = "下一題 ➡️";
+  }
+  nextBtn.style.display = "block";
+  autoSaveToCloud();
+}
+
+function handleAfterAnswer() {
+  document.getElementById("quiz-modal").style.display = "none";
+  if (answeredCorrectly) {
+    playerReset();
+    gamePaused = false;
+  } else {
+    openQuiz();
+  }
+}
+
+function showTurnOptions() {
+  document.getElementById("turn-score").innerText = totalScore;
+  const turnModal = document.getElementById("turn-modal");
+  const saveBtn = document.getElementById("turn-save-btn");
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.style.opacity = "0.6";
+    setTimeout(() => { saveBtn.disabled = false; saveBtn.style.opacity = "1"; }, 500);
+  }
+  turnModal.style.display = "flex";
+}
+
+function continueToNextQuiz() {
+  document.getElementById("turn-modal").style.display = "none";
+  openQuiz();
+}
+
+function saveAndExit() {
+  autoSaveToCloud();
+  alert("進度已完整同步！");
+  location.reload();
+}
+
+/* ==================== 6. 教師後台 ==================== */
+function openAdmin() {
+  document.getElementById("admin-modal").style.display = "flex";
+  fetchClassScores();
+}
+function closeAdmin() { document.getElementById("admin-modal").style.display = "none"; }
+
+function switchAdminTab(tab) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("tab-scores").style.display = "none";
+  document.getElementById("tab-editQ").style.display = "none";
+  document.getElementById("tab-importExcel").style.display = "none";
+  document.getElementById("tab-addQ").style.display = "none";
+
+  if (tab === "scores") {
+    event.target.classList.add("active");
+    document.getElementById("tab-scores").style.display = "block";
+    fetchClassScores();
+  } else if (tab === "editQ") {
+    event.target.classList.add("active");
+    document.getElementById("tab-editQ").style.display = "block";
+    renderAdminQuestionsList();
+  } else if (tab === "importExcel") {
+    event.target.classList.add("active");
+    document.getElementById("tab-importExcel").style.display = "block";
+  } else {
+    event.target.classList.add("active");
+    document.getElementById("tab-addQ").style.display = "block";
+  }
+}
+
+async function renderAdminQuestionsList() {
+  const tbody = document.getElementById("admin-q-tbody");
+  tbody.innerHTML = `<tr><td colspan="4">讀取雲端題庫中...</td></tr>`;
+  await loadQuestionsFromCloud();
+  if (questions.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4">目前雲端沒有任何題目</td></tr>`; return;
+  }
+  tbody.innerHTML = "";
+  questions.forEach(q => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><b>#${q.id}</b></td>
+      <td style="text-align:left; font-size:0.75rem;">${q.q}</td>
+      <td>
+        <select id="diff-sel-${q.id}" style="background:#222; color:#fff; border:1px solid #666; border-radius:4px; padding:2px; font-size:0.72rem;">
+          <option value="1" ${q.difficulty == 1 ? "selected" : ""}>🌱 簡單 (+1)</option>
+          <option value="2" ${q.difficulty == 2 ? "selected" : ""}>📘 普通 (+2)</option>
+          <option value="3" ${q.difficulty == 3 ? "selected" : ""}>⚡ 難 (+3)</option>
+          <option value="4" ${q.difficulty == 4 ? "selected" : ""}>🔥 非常難 (+4)</option>
+          <option value="5" ${q.difficulty == 5 ? "selected" : ""}>☠️ 地獄 (+5)</option>
+        </select>
+      </td>
+      <td>
+        <button class="save-mini-btn" onclick="saveQuestionDifficulty(${q.id})">💾 儲存</button>
+        <button class="del-btn" style="margin-left:3px;" onclick="deleteQuestionItem(${q.id})">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function saveQuestionDifficulty(qId) {
+  const newDiff = document.getElementById(`diff-sel-${qId}`).value;
+  await fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "updateQuestionDifficulty", id: qId, difficulty: newDiff })
+  });
+  alert(`第 #${qId} 題難度已更新！`);
+  await loadQuestionsFromCloud();
+}
+
+async function deleteQuestionItem(qId) {
+  if (!confirm(`確定要刪除第 #${qId} 題嗎？`)) return;
+  await fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "deleteQuestion", id: qId })
+  });
+  alert(`已刪除第 #${qId} 題！`);
+  renderAdminQuestionsList();
+}
+
+function toggleAdminQuestionType() {
+  const type = document.getElementById("adm-type").value;
+  if (type === "choice") {
+    document.getElementById("adm-choice-box").style.display = "block";
+    document.getElementById("adm-text-box").style.display = "none";
+  } else {
+    document.getElementById("adm-choice-box").style.display = "none";
+    document.getElementById("adm-text-box").style.display = "block";
+  }
+}
+
+async function fetchClassScores() {
+  const tbody = document.getElementById("scores-tbody");
+  tbody.innerHTML = `<tr><td colspan="5">更新數據中...</td></tr>`;
+  try {
+    const res = await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "getAllScores" })
+    });
+    const data = await res.json();
+    if (data.status === "success") {
+      tbody.innerHTML = "";
+      if (data.students.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5">目前尚無作答紀錄</td></tr>`; return;
+      }
+      data.students.sort((a,b) => b.score - a.score);
+      data.students.forEach(st => {
+        let wrongHtml = `<span style="color:#4caf50;">無 (全對)</span>`;
+        if (st.wrongList && st.wrongList !== "無" && st.wrongList !== "無 (全對)") {
+          const list = st.wrongList.split(";").map(item => item.trim()).filter(Boolean);
+          wrongHtml = list.map(item => `<div>• ${item}</div>`).join("");
+        }
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><b>${st.name}</b></td>
+          <td style="color:#4caf50; font-weight:bold;">${st.score}</td>
+          <td>${st.correctCount}</td>
+          <td style="color:#ff5252; font-size:0.75rem; text-align:left; line-height:1.3;">${wrongHtml}</td>
+          <td><button class="del-btn" onclick="deleteStudentRecord('${st.email}', '${st.name}')">🗑️ 刪除</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:red;">載入失敗！</td></tr>`;
+  }
+}
+
+async function deleteStudentRecord(email, name) {
+  if (!confirm(`確定要刪除「${name}」的紀錄嗎？`)) return;
+  await fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "deleteStudent", email: email })
+  });
+  alert(`已成功刪除 ${name} 的紀錄！`);
+  fetchClassScores();
+  updateSideLeaderboard();
+}
+
+/* ==================== 7. Excel 批次處理 ==================== */
+function downloadExcelTemplate() {
+  const templateData = [
+    ["題目文字", "圖片網址(可留空)", "選項1", "選項2", "選項3", "選項4", "正確答案(選擇題填1-4/打字題填文字)", "是否公布解答(TRUE/FALSE)", "解析內容", "難度等級(1簡單-5地獄)", "題型(choice/text)"],
+    ["下列哪一個是台灣最高峰？", "", "玉山", "雪山", "陽明山", "阿里山", "1", "TRUE", "玉山海拔 3,952 公尺。", 2, "choice"],
+    ["請輸入人體中負責輸送氧氣的主要血球全名？", "", "", "", "", "", "紅血球, 紅細胞", "TRUE", "紅血球攜帶氧氣。", 5, "text"]
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(templateData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "題庫範本");
+  XLSX.writeFile(wb, "俄羅斯方塊_標準題庫出題範本.xlsx");
+}
+
+function processExcelUpload() {
+  const fileInput = document.getElementById("excel-file-input");
+  const statusEl = document.getElementById("import-status");
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert("請先選擇要上傳的 .xlsx 題庫檔案！"); return;
+  }
+
+  const file = fileInput.files[0];
+  statusEl.innerText = "⏳ 正在解析 Excel 內容中...";
+  const reader = new FileReader();
+
+  reader.onload = async function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+      if (rows.length <= 1) {
+        statusEl.innerText = "❌ 檔案內容為空或無題目！"; return;
+      }
+
+      const parsedQuestions = [];
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
+        if (r && r[0]) {
+          parsedQuestions.push({
+            q: String(r[0]),
+            img: r[1] ? String(r[1]) : "",
+            options: [String(r[2] || ""), String(r[3] || ""), String(r[4] || ""), String(r[5] || "")],
+            ans: String(r[6] || "").trim(),
+            showAnswer: (String(r[7]).toUpperCase() === "TRUE"),
+            explanation: r[8] ? String(r[8]) : "",
+            difficulty: Number(r[9]) || 2,
+            type: (String(r[10]).toLowerCase() === "text") ? "text" : "choice"
+          });
+        }
+      }
+
+      statusEl.innerText = `📤 正在批次匯入 ${parsedQuestions.length} 道題目至雲端...`;
+      const res = await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "batchAddQuestions", questions: parsedQuestions })
+      });
+      const resData = await res.json();
+
+      if (resData.status === "batch_added") {
+        statusEl.innerHTML = `<b style="color:#4caf50;">🎉 成功批次匯入 ${resData.count} 道題目！</b>`;
+        fileInput.value = "";
+        await loadQuestionsFromCloud();
+      } else {
+        statusEl.innerText = "❌ 匯入失敗，請確認試算表狀態。";
+      }
+    } catch (err) {
+      statusEl.innerText = "❌ 檔案解析失敗，請確認格式為標準 .xlsx 範本！";
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function submitNewQuestion() {
+  const diff = document.getElementById("adm-diff").value;
+  const type = document.getElementById("adm-type").value;
+  const q = document.getElementById("adm-q").value.trim();
+  const img = document.getElementById("adm-img").value.trim();
+  const show = document.getElementById("adm-show").value === "true";
+  const exp = document.getElementById("adm-exp").value.trim();
+
+  let ans = "";
+  let options = ["", "", "", ""];
+
+  if (type === "choice") {
+    options = [
+      document.getElementById("adm-opt1").value.trim(),
+      document.getElementById("adm-opt2").value.trim(),
+      document.getElementById("adm-opt3").value.trim(),
+      document.getElementById("adm-opt4").value.trim()
+    ];
+    ans = document.getElementById("adm-ans-choice").value;
+    if (!q || !options[0] || !options[1] || !options[2] || !options[3]) {
+      alert("請完整填寫選擇題的題目與四個選項！"); return;
+    }
+  } else {
+    ans = document.getElementById("adm-ans-text").value.trim();
+    if (!q || !ans) { alert("請填寫填空題的題目與答案！"); return; }
+  }
+
+  await fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "addQuestion", q, img, options, ans,
+      showAnswer: show, explanation: exp, difficulty: diff, type: type
+    })
+  });
+
+  alert("🎉 新題目已新增至雲端！");
+  await loadQuestionsFromCloud();
+  switchAdminTab("scores");
+}
+
+function startTeacherTest() {
+  closeAdmin();
+  openQuiz();
+}
+
+/* ==================== 8. 排行榜與自動存檔 ==================== */
+async function updateSideLeaderboard() {
+  const box = document.getElementById("rank-list-box");
+  try {
+    const res = await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "getAllScores" })
+    });
+    const data = await res.json();
+    if (data.status === "success" && data.students.length > 0) {
+      data.students.sort((a,b) => b.score - a.score);
+      const topList = data.students.slice(0, 5);
+      let html = "";
+      const medals = ["🥇", "🥈", "🥉", "4.", "5."];
+      topList.forEach((st, idx) => {
+        html += `
+          <div class="rank-item">
+            <span>${medals[idx]} <span class="rank-name">${st.name}</span></span>
+            <b style="color:#ffeb3b;">${st.score}分</b>
+          </div>
+        `;
+      });
+      box.innerHTML = html;
+    } else {
+      box.innerHTML = `<div style="color:#aaa; text-align:center;">暫無排名</div>`;
+    }
+  } catch (e) {
+    box.innerHTML = `<div style="color:#888; text-align:center;">更新中...</div>`;
+  }
+}
+
+function autoSaveToCloud() {
+  const wrongText = wrongQuestions.length > 0 ? wrongQuestions.join("; ") : "無 (全對)";
+  fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "saveScore", email: userEmail, name: userName,
+      score: totalScore, correctCount: correctCount,
+      wrongList: wrongText, arena: arena,
+      qMastery: qMasteryStats
+    })
+  }).then(() => updateSideLeaderboard());
+}
+
+/* ==================== 9. 方塊核心引擎 ==================== */
+const canvas = document.getElementById("tetris");
+const context = canvas.getContext("2d");
+context.scale(20, 20);
+
+const player = { pos: {x: 0, y: 0}, matrix: null, type: null };
+let clearingRows = [];
+let flashState = false;
+
+function createMatrix(w, h) {
+  const matrix = [];
+  while (h--) matrix.push(new Array(w).fill(0));
+  return matrix;
+}
+
+function createPiece(type) {
+  if (type === 'I') return [[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]];
+  if (type === 'L') return [[0,2,0],[0,2,0],[0,2,2]];
+  if (type === 'J') return [[0,3,0],[0,3,0],[3,3,0]];
+  if (type === 'O') return [[4,4],[4,4]];
+  if (type === 'Z') return [[5,5,0],[0,5,5],[0,0,0]];
+  if (type === 'S') return [[0,6,6],[6,6,0],[0,0,0]];
+  if (type === 'T') return [[0,7,0],[7,7,7],[0,0,0]];
+}
+
+const colors = [null, '#00f0f0', '#ffaa00', '#0000f0', '#f0f000', '#f00000', '#00f000', '#a000f0'];
+
+function draw() {
+  context.fillStyle = '#000';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  
+  arena.forEach((row, y) => {
+    const isClearing = clearingRows.includes(y);
+    row.forEach((value, x) => {
+      if (value !== 0) {
+        context.fillStyle = (isClearing && flashState) ? "#ffffff" : colors[value];
+        context.fillRect(x, y, 1, 1);
+        context.lineWidth = 0.05;
+        context.strokeStyle = "#fff";
+        context.strokeRect(x, y, 1, 1);
+      }
+    });
+  });
+
+  if (!gamePaused && player.matrix) drawMatrix(player.matrix, player.pos);
+}
+
+function drawMatrix(matrix, offset) {
+  matrix.forEach((row, y) => {
+    row.forEach((value, x) => {
+      if (value !== 0) {
+        context.fillStyle = colors[value];
+        context.fillRect(x + offset.x, y + offset.y, 1, 1);
+        context.lineWidth = 0.05;
+        context.strokeStyle = "#fff";
+        context.strokeRect(x + offset.x, y + offset.y, 1, 1);
+      }
+    });
+  });
+}
+
+function playerReset() {
+  const pieces = 'ILJOZST';
+  const chosenType = pieces[Math.floor(pieces.length * Math.random())];
+  player.type = chosenType;
+  player.matrix = createPiece(chosenType);
+  player.pos.y = 0;
+  player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+  hasUsedHoldThisRound = false;
+
+  if (collide(arena, player)) {
+    alert(`💥 棋盤已堆滿！\n已為您清空棋盤，目前累積總分【${totalScore} 分】將繼續累加，請繼續挑戰！`);
+    arena.forEach(row => row.fill(0));
+    draw();
+    autoSaveToCloud();
+    gamePaused = true;
+    openQuiz();
+    return;
+  }
+}
+
+function collide(arena, player) {
+  const m = player.matrix;
+  const o = player.pos;
+  for (let y = 0; y < m.length; ++y) {
+    for (let x = 0; x < m[y].length; ++x) {
+      if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) return true;
+    }
+  }
+  return false;
+}
+
+function merge(arena, player) {
+  player.matrix.forEach((row, y) => {
+    row.forEach((value, x) => {
+      if (value !== 0) arena[y + player.pos.y][x + player.pos.x] = value;
+    });
+  });
+}
+
+function checkAndAnimateClear(callback) {
+  clearingRows = [];
+  for (let y = arena.length - 1; y >= 0; --y) {
+    if (arena[y].every(v => v !== 0)) clearingRows.push(y);
+  }
+
+  const lines = clearingRows.length;
+  if (lines === 0) { callback(); return; }
+
+  let flashCount = 0;
+  const flashInterval = setInterval(() => {
+    flashState = !flashState;
+    draw();
+    flashCount++;
+    if (flashCount >= 6) {
+      clearInterval(flashInterval);
+      clearingRows.sort((a,b) => a - b).forEach(y => {
+        arena.splice(y, 1);
+        arena.unshift(new Array(12).fill(0));
+      });
+      clearingRows = [];
+      flashState = false;
+
+      const multiplier = Math.min(lines, 4);
+      const earned = lines * multiplier;
+      totalScore += earned;
+      updateScoreUI();
+      showFloatingScore(earned, `${multiplier}倍加乘`);
+      autoSaveToCloud();
+
+      setTimeout(callback, 800);
+    }
+  }, 60);
+}
+
+function showFloatingScore(score, text) {
+  const floatEl = document.getElementById("float-score");
+  floatEl.innerText = `+${score} 分! (${text})`;
+  floatEl.classList.add("show");
+  setTimeout(() => floatEl.classList.remove("show"), 1000);
+}
+
+function updateScoreUI() {
+  document.getElementById("score").innerText = totalScore;
+}
+
+function lockPiece() {
+  gamePaused = true;
+  merge(arena, player);
+  draw();
+  checkAndAnimateClear(() => {
+    showTurnOptions();
+  });
+}
+
+function playerMove(dir) {
+  if (gamePaused) return;
+  player.pos.x += dir;
+  if (collide(arena, player)) player.pos.x -= dir;
+  draw();
+}
+
+function playerDropSlow() {
+  if (gamePaused) return;
+  player.pos.y++;
+  if (collide(arena, player)) {
+    player.pos.y--;
+    lockPiece();
+  }
+  draw();
+}
+
+function playerRotate() {
+  if (gamePaused) return;
+  const m = player.matrix;
+  for (let y = 0; y < m.length; ++y) {
+    for (let x = 0; x < y; ++x) [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
+  }
+  m.forEach(row => row.reverse());
+  let offset = 1;
+  while (collide(arena, player)) {
+    player.pos.x += offset;
+    offset = -(offset + (offset > 0 ? 1 : -1));
+    if (offset > m[0].length) { player.matrix.reverse(); return; }
+  }
+  draw();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === "ArrowLeft") playerMove(-1);
+  else if (e.key === "ArrowRight") playerMove(1);
+  else if (e.key === "ArrowDown") playerDropSlow();
+  else if (e.key === "ArrowUp") playerRotate();
+  else if (e.code === "Space") requestHardDrop();
+});
+
+/* ==================== 10. 長按連發控制器 ==================== */
+function bindContinuousPress(buttonId, actionFn, initialDelay = 180, repeatInterval = 60) {
+  const btn = document.getElementById(buttonId);
+  if (!btn) return;
+  let timeoutId = null;
+  let intervalId = null;
+
+  const start = (e) => {
+    if (e.cancelable) e.preventDefault();
+    actionFn();
+    clearTimeout(timeoutId);
+    clearInterval(intervalId);
+    timeoutId = setTimeout(() => {
+      intervalId = setInterval(actionFn, repeatInterval);
+    }, initialDelay);
+  };
+
+  const stop = () => {
+    clearTimeout(timeoutId);
+    clearInterval(intervalId);
+  };
+
+  btn.addEventListener('touchstart', start, { passive: false });
+  btn.addEventListener('touchend', stop);
+  btn.addEventListener('touchcancel', stop);
+  btn.addEventListener('mousedown', start);
+  btn.addEventListener('mouseup', stop);
+  btn.addEventListener('mouseleave', stop);
+}
+
+bindContinuousPress("btn-left", () => playerMove(-1), 180, 70);
+bindContinuousPress("btn-right", () => playerMove(1), 180, 70);
+bindContinuousPress("btn-down", () => playerDropSlow(), 150, 50);
+bindContinuousPress("btn-rotate", () => playerRotate(), 220, 160);
+
+setInterval(draw, 100);
+</script>
+</body>
+</html>
