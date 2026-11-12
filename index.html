@@ -104,7 +104,7 @@
       background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 100;
     }
     .modal-box {
-      background: #262626; padding: 18px; border-radius: 12px;
+      background: #262626; padding: 20px; border-radius: 12px;
       width: 92%; max-width: 520px; text-align: left; max-height: 85vh; overflow-y: auto;
     }
     .option-btn {
@@ -114,8 +114,8 @@
     }
     .option-btn:active { background: #01579b; }
     .input-field {
-      width: 100%; padding: 8px; margin: 4px 0 10px; border-radius: 6px;
-      border: 1px solid #777; background: #333; color: white; font-size: 0.95rem;
+      width: 100%; padding: 10px; margin: 6px 0 14px; border-radius: 6px;
+      border: 1px solid #777; background: #333; color: white; font-size: 1rem;
     }
     .q-img { max-width: 100%; max-height: 140px; border-radius: 6px; margin: 8px 0; display: block; }
     .diff-badge {
@@ -191,13 +191,22 @@
       display: none;
     }
 
-    /* 抽獎開箱震撼動畫 */
+    /* ==================== 震撼開箱＋火山噴發＋換卡切換動畫 ==================== */
     @keyframes click-shake {
       0%, 100% { transform: scale(1) translate(0, 0) rotate(0deg); }
       10%, 30%, 50%, 70%, 90% { transform: scale(1.08) translate(-8px, -5px) rotate(-4deg); }
       20%, 40%, 60%, 80% { transform: scale(1.08) translate(8px, 5px) rotate(4deg); }
     }
     .anim-chest-shake { animation: click-shake 1.3s ease-in-out forwards; }
+
+    /* 火山噴發拋物線動畫 (在中央對稱噴射) */
+    @keyframes fly-eruption-x { 0% { transform: translateX(-50%); } 100% { transform: translateX(calc(-50% + var(--tx))); } }
+    @keyframes fly-eruption-y {
+      0% { transform: translateY(-50%) scale(0.1); opacity: 0; animation-timing-function: ease-out; }
+      20% { opacity: 1; }
+      45% { transform: translateY(calc(-50% + var(--peak-y, -200px))) scale(1.1); animation-timing-function: ease-in; }
+      100% { transform: translateY(calc(-50% + var(--ty))) scale(1); opacity: 1; }
+    }
 
     @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .anim-rays { animation: spin-slow 18s linear infinite; }
@@ -218,14 +227,23 @@
     }
     .text-rainbow { animation: rainbow-text 2s linear infinite; }
 
-    /* 單張卡牌旋轉放大動畫 */
-    @keyframes cardZoomRotate {
-      0% { transform: translate(-50%, -50%) scale(0.1) rotate(-180deg); opacity: 0; }
-      70% { transform: translate(-50%, -50%) scale(1.08) rotate(10deg); opacity: 1; }
+    /* 【換卡切換動效】：從中心旋轉放大進場 */
+    @keyframes cardZoomInFromCenter {
+      0% { transform: translate(-50%, -50%) scale(0.1) rotate(-140deg); opacity: 0; filter: blur(6px); }
+      70% { transform: translate(-50%, -50%) scale(1.08) rotate(8deg); opacity: 1; filter: blur(0); }
       100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
     }
-    .anim-single-card {
-      animation: cardZoomRotate 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    .anim-card-in {
+      animation: cardZoomInFromCenter 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+
+    /* 【換卡切換動效】：向中心旋轉縮小退場 */
+    @keyframes cardShrinkToCenter {
+      0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(0.1) rotate(140deg); opacity: 0; filter: blur(6px); }
+    }
+    .anim-card-out {
+      animation: cardShrinkToCenter 0.32s cubic-bezier(0.4, 0, 0.8, 0.4) forwards;
     }
   </style>
 </head>
@@ -346,11 +364,11 @@
     </div>
   </div>
 
-  <!-- 6. 【震撼開箱動畫全螢幕遮罩 - 逐張旋轉放大展示】 -->
+  <!-- 6. 【震撼開箱全螢幕舞台：火山噴發 ➔ 逐張旋轉縮放檢視】 -->
   <div id="chest-animation-stage" style="display:none; position:fixed; inset:0; z-index:300; background:#000; flex-direction:column; align-items:center; justify-content:center; overflow:hidden;">
     <div id="flash-layer" style="position:fixed; inset:0; background:#fff; z-index:400; opacity:0; pointer-events:none; transition:opacity 0.2s ease-in;"></div>
 
-    <div style="position:relative; width:100%; max-width:500px; display:flex; flex-direction:column; align-items:center;">
+    <div style="position:relative; width:100%; max-width:520px; display:flex; flex-direction:column; align-items:center;">
       <h2 id="anim-stage-title" style="font-size:1.8rem; font-weight:800; color:#ffd600; margin-bottom:15px; text-shadow:0 0 15px rgba(255,214,0,0.6);">開啟寶箱中...</h2>
 
       <div style="position:relative; width:220px; height:220px; display:flex; align-items:center; justify-content:center;">
@@ -361,7 +379,10 @@
         </div>
       </div>
 
-      <!-- 中心點單張卡片展示區 -->
+      <!-- 火山噴發層 (在中央周圍爆發飛散) -->
+      <div id="eruption-cards-container" style="position:absolute; top:45%; left:50%; width:0; height:0; z-index:45; pointer-events:none;"></div>
+
+      <!-- 中心點單張卡片旋轉放大展示區 (含換卡切換動畫) -->
       <div id="single-card-showcase" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:80; display:none; flex-direction:column; align-items:center;"></div>
     </div>
   </div>
@@ -394,7 +415,7 @@
         </div>
       </div>
 
-      <!-- 頁籤二：教師一鍵發放獎勵 -->
+      <!-- 頁籤二：教師發放獎勵 -->
       <div id="tab-grantReward" style="display:none; text-align:left;">
         <h4 style="margin:5px 0 10px; color:#ba68c8;">🚀 手動發放鑰匙或道具給學生</h4>
         <label>選擇目標學生：</label>
@@ -429,7 +450,7 @@
         <div id="grant-status" style="margin-top:6px; font-size:0.85rem;"></div>
       </div>
 
-      <!-- 頁籤三：寶箱設定 (支援自訂圖片上傳) -->
+      <!-- 頁籤三：寶箱設定 -->
       <div id="tab-chestConfig" style="display:none; text-align:left;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <h4 style="margin:0; color:#ffd600;">🎁 11 款寶箱抽獎設定</h4>
@@ -461,7 +482,7 @@
 
         <div style="background:#1e1e1e; padding:10px; border-radius:8px; border:1px solid #444;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span style="font-size:0.85rem; color:#69f0ae; font-weight:bold;">物品池設定 (可上傳自訂圖片)</span>
+            <span style="font-size:0.85rem; color:#69f0ae; font-weight:bold;">物品池設定 (可上傳圖片)</span>
             <div id="cfg-pool-tabs" style="display:flex; gap:4px;"></div>
           </div>
           <div id="cfg-items-list" style="max-height:180px; overflow-y:auto; font-size:0.8rem;"></div>
@@ -502,7 +523,7 @@
     </div>
   </div>
 
-  <!-- 原有彈窗 -->
+  <!-- 其他必要彈窗 -->
   <div id="login-modal" class="modal">
     <div class="modal-box" style="text-align:center;">
       <h3>🎮 答題俄羅斯方塊</h3>
@@ -822,7 +843,7 @@ function renderRewardPage(pageIdx) {
     } else if (isUnlocked) {
       btn.className = "chest-status-btn status-unlocked";
       btn.innerHTML = `<span class="lock-icon-elem">✨</span><span style="margin-left:2px;">開箱</span>`;
-      btn.onclick = () => triggerOpenChestWithAnimation(m, btn);
+      btn.onclick = (e) => triggerOpenChestWithAnimation(m, btn);
     } else {
       btn.className = "chest-status-btn status-locked";
       btn.innerHTML = `<span class="lock-icon-elem">🔒</span><span style="margin-left:2px;">鎖定</span>`;
@@ -963,7 +984,7 @@ function renderBackpackItems() {
   });
 }
 
-/* ==================== 6. 【逐張旋轉放大開箱演出】 ==================== */
+/* ==================== 6. 【火山噴發 ➔ 逐張旋轉縮放開箱演算法】 ==================== */
 function promptUseKey(chestId) {
   const cDef = CHEST_DEFS.find(c => c.id === chestId);
   if (!cDef) return;
@@ -996,11 +1017,11 @@ function executeOpenChestSequence() {
   const cConfig = (cloudChestConfigs && cloudChestConfigs[cDef.id]) ? cloudChestConfigs[cDef.id] : null;
   const probs = (cConfig && cConfig.probs) ? cConfig.probs : { common: 75, rare: 18, epic: 5, legendary: 1.5, mythic: 0.5 };
   const pools = (cConfig && cConfig.pools) ? cConfig.pools : {
-    common: [{name: '粗鐵劍'}, {name: '木盾'}],
-    rare: [{name: '鋼鐵護甲'}],
-    epic: [{name: '烈焰長槍'}],
-    legendary: [{name: '王者聖劍'}],
-    mythic: [{name: '星辰神杖'}]
+    common: [{name: '粗鐵劍', image: null}, {name: '木盾', image: null}],
+    rare: [{name: '鋼鐵護甲', image: null}],
+    epic: [{name: '烈焰長槍', image: null}],
+    legendary: [{name: '王者聖劍', image: null}],
+    mythic: [{name: '星辰神杖', image: null}]
   };
   const dropAmount = (cConfig && cConfig.dropConfig && cConfig.dropConfig.dropMode === 'fixed') ? cConfig.dropConfig.dropAmount : 3;
 
@@ -1035,6 +1056,7 @@ function executeOpenChestSequence() {
   const glow = document.getElementById("anim-chest-glow");
   const rays = document.getElementById("anim-chest-rays");
   const flash = document.getElementById("flash-layer");
+  const eruptionContainer = document.getElementById("eruption-cards-container");
   const showcase = document.getElementById("single-card-showcase");
 
   stage.style.display = "flex";
@@ -1042,6 +1064,7 @@ function executeOpenChestSequence() {
   chestImg.className = "anim-chest-shake";
   glow.style.display = "none";
   rays.style.display = "none";
+  eruptionContainer.innerHTML = "";
   showcase.style.display = "none";
   showcase.innerHTML = "";
   flash.style.opacity = "0";
@@ -1056,7 +1079,7 @@ function executeOpenChestSequence() {
     rays.style.display = "block";
   }, 1200);
 
-  // 2.2 秒後：白光一閃，寶箱打開，開始「逐張」在正中央旋轉放大展示！
+  // 2.2 秒後：白光一閃，寶箱炸開，【第一階段：火山噴發飛向空中四周】！
   setTimeout(() => {
     flash.style.opacity = "1";
     setTimeout(() => {
@@ -1065,17 +1088,70 @@ function executeOpenChestSequence() {
       rays.style.display = "none";
       flash.style.opacity = "0";
 
-      currentLootIndex = 0;
-      showNextLootCard();
+      // 觸發火山噴發 (保留爆發快感，並保證對稱在螢幕中心)
+      playEruptionEffect(currentLootQueue);
+
+      // 噴發結束 (1.2 秒後)，自動淡出飛散卡片，無縫切換到【第二階段：單張旋轉放大展示】！
+      setTimeout(() => {
+        eruptionContainer.style.transition = "opacity 0.4s ease-out";
+        eruptionContainer.style.opacity = "0";
+
+        setTimeout(() => {
+          eruptionContainer.innerHTML = "";
+          eruptionContainer.style.opacity = "1";
+          eruptionContainer.style.transition = "";
+
+          currentLootIndex = 0;
+          showNextLootCard(true); // 第一張卡片進場
+        }, 400);
+      }, 1100);
+
     }, 200);
   }, 2200);
 }
 
-// 【逐張卡片旋轉放大到中心點】
-function showNextLootCard() {
+// 【第一階段】：火山噴發 (對稱扇形飛射四周)
+function playEruptionEffect(items) {
+  const container = document.getElementById("eruption-cards-container");
+  container.innerHTML = "";
+  const total = items.length;
+  const isLarge = total <= 3;
+  const cardW = isLarge ? 90 : 70;
+  const spacing = cardW + 15;
+  const startX = -((total - 1) * spacing) / 2;
+
+  items.forEach((it, idx) => {
+    const tx = startX + idx * spacing;
+    const ty = -100 + (idx % 2 === 0 ? -20 : 15);
+
+    const card = document.createElement("div");
+    card.style.cssText = `
+      position:absolute; top:0; left:0;
+      --tx:${tx}px; --ty:${ty}px; --peak-y:-220px;
+      animation: fly-eruption-x 0.75s ease-out forwards, fly-eruption-y 0.75s forwards;
+      animation-delay: ${idx * 0.08}s;
+      width: ${cardW}px; border-radius: 10px; border: 2px solid ${it.rarity.color};
+      background: #181324; box-shadow: 0 0 20px ${it.rarity.color}88;
+      padding: 6px 2px; text-align: center;
+    `;
+    const imgHtml = it.image ? 
+      `<img src="${it.image}" style="width:34px; height:34px; object-fit:contain; margin:2px auto; display:block;">` : 
+      `<div style="font-size:1.6rem; margin:2px 0;">🗡️</div>`;
+    card.innerHTML = `
+      <span style="font-size:0.6rem; padding:1px 4px; border-radius:4px; background:${it.rarity.color}44; color:${it.rarity.color}; font-weight:bold;">${it.rarity.name}</span>
+      ${imgHtml}
+      <div style="font-size:0.75rem; font-weight:bold; color:${it.rarity.color}; margin-top:2px;" class="${it.rarity.isRainbow ? 'text-rainbow' : ''}">${it.name}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// 【第二階段】：單張卡片旋轉放大，換卡時向中心縮放切換
+function showNextLootCard(isFirst = false) {
   const showcase = document.getElementById("single-card-showcase");
+
   if (currentLootIndex >= currentLootQueue.length) {
-    // 全部抽完：寫入背包並存檔
+    // 全部檢視完畢：存檔並返回背包
     if (!studentBackpack.items) studentBackpack.items = [];
     currentLootQueue.forEach(it => studentBackpack.items.push(it));
 
@@ -1083,13 +1159,9 @@ function showNextLootCard() {
     fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
       body: JSON.stringify({
-        action: "openChestLog",
-        email: userEmail,
-        name: userName,
-        chestName: cDef.name,
-        keyUsed: cDef.key,
-        itemsObtained: currentLootQueue,
-        updatedBackpack: studentBackpack
+        action: "openChestLog", email: userEmail, name: userName,
+        chestName: cDef.name, keyUsed: cDef.key,
+        itemsObtained: currentLootQueue, updatedBackpack: studentBackpack
       })
     });
 
@@ -1104,11 +1176,8 @@ function showNextLootCard() {
   const it = currentLootQueue[currentLootIndex];
   const total = currentLootQueue.length;
 
-  showcase.style.display = "flex";
-  showcase.className = "anim-single-card";
-
   const imgHtml = it.image ? 
-    `<img src="${it.image}" style="width:110px; height:110px; object-fit:contain; margin:15px auto; display:block; filter:drop-shadow(0 0 15px ${it.rarity.color});">` : 
+    `<img src="${it.image}" style="width:115px; height:115px; object-fit:contain; margin:15px auto; display:block; filter:drop-shadow(0 0 15px ${it.rarity.color});">` : 
     `<div style="font-size:4.5rem; margin:15px 0;">🗡️</div>`;
 
   showcase.innerHTML = `
@@ -1121,19 +1190,24 @@ function showNextLootCard() {
       確定收下 (${currentLootIndex + 1}/${total}) ➡️
     </button>
   `;
+
+  showcase.style.display = "flex";
+  // 套用從中心旋轉放大進場動畫
+  showcase.className = "anim-card-in";
 }
 
+// 點擊確認：當前卡牌向中心旋轉縮小，緊接著下一張從中心旋轉放大！
 function confirmCurrentLootCard() {
   const showcase = document.getElementById("single-card-showcase");
-  showcase.style.transition = "transform 0.3s ease-in, opacity 0.3s ease-in";
-  showcase.style.transform = "translate(-50%, -50%) scale(0.2) rotate(45deg)";
-  showcase.style.opacity = "0";
+  
+  // 第一張卡牌向中心縮小退場
+  showcase.className = "anim-card-out";
 
   setTimeout(() => {
-    showcase.style.transition = "";
     currentLootIndex++;
-    showNextLootCard();
-  }, 320);
+    // 第二張卡牌從中心旋轉放大進場
+    showNextLootCard(false);
+  }, 300); // 縮小 0.3 秒後無縫換卡
 }
 
 /* ==================== 7. 教師後台 (發放獎勵修復 + 圖片上傳) ==================== */
@@ -1159,7 +1233,6 @@ function switchAdminTab(tab) {
   if (tab === "editQ") renderAdminQuestionsList();
 }
 
-// 發放獎勵
 function initAdminGrantDropdowns() {
   const sSel = document.getElementById("grant-student-sel");
   const kSel = document.getElementById("grant-key-sel");
@@ -1234,7 +1307,6 @@ async function submitGrantReward() {
   }
 }
 
-// 圖片壓縮為輕量 Base64 縮圖 (長寬最大 180px，體積小於 15KB)
 function compressImageToBase64(file, callback) {
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -1258,7 +1330,6 @@ function compressImageToBase64(file, callback) {
   reader.readAsDataURL(file);
 }
 
-// 寶箱設定面板
 let currentEditChestId = "chest_1k";
 let activePoolTab = "common";
 
@@ -1308,7 +1379,6 @@ function renderPoolTabs() {
   });
 }
 
-// 支援每個物品獨立上傳圖片
 function renderPoolItems() {
   const list = document.getElementById("cfg-items-list");
   list.innerHTML = "";
