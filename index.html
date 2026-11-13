@@ -137,7 +137,6 @@
     .del-btn { background: #d32f2f; color: white; border: none; border-radius: 4px; padding: 3px 6px; font-size: 0.75rem; cursor: pointer; }
     .save-mini-btn { background: #4caf50; color: white; border: none; border-radius: 4px; padding: 3px 6px; font-size: 0.75rem; cursor: pointer; }
 
-    /* 鎖定按鈕位置對位 */
     .reward-container-box { position: relative; width: 100%; }
     .chest-overlay-grid {
       position: absolute; top: 17.2%; bottom: 4.6%; right: 4.8%; width: 21%;
@@ -192,7 +191,6 @@
       display: none;
     }
 
-    /* 開箱動畫與卡片換卡動效 */
     @keyframes click-shake {
       0%, 100% { transform: scale(1) translate(0, 0) rotate(0deg); }
       10%, 30%, 50%, 70%, 90% { transform: scale(1.08) translate(-8px, -5px) rotate(-4deg); }
@@ -225,7 +223,6 @@
     }
     .text-rainbow { animation: rainbow-text 2s linear infinite; }
 
-    /* 換卡切換動效 */
     @keyframes cardZoomInFromCenter {
       0% { transform: translate(-50%, -50%) scale(0.1) rotate(-140deg); opacity: 0; filter: blur(6px); }
       70% { transform: translate(-50%, -50%) scale(1.06) rotate(6deg); opacity: 1; filter: blur(0); }
@@ -354,7 +351,7 @@
       <img id="confirm-key-img" src="" style="width:65px; height:65px; margin:5px auto; display:block;" alt="鑰匙">
       <p id="confirm-key-text" style="font-size:0.92rem; color:#fff; line-height:1.5; margin:10px 0 16px;"></p>
       <div style="display:flex; gap:10px;">
-        <button class="option-btn" style="text-align:center; background:#4caf50; margin:0; flex:1; font-weight:bold;" onclick="executeOpenChestSequence()">✨ 立即開箱！</button>
+        <button id="btn-do-open-chest" class="option-btn" style="text-align:center; background:#4caf50; margin:0; flex:1; font-weight:bold;" onclick="executeOpenChestSequence()">✨ 立即開箱！</button>
         <button class="option-btn" style="text-align:center; background:#555; margin:0; flex:1;" onclick="closeUseKeyConfirm()">取消</button>
       </div>
     </div>
@@ -432,8 +429,8 @@
             <option value="epic">罕見 (紫)</option><option value="legendary">傳說 (金)</option>
             <option value="mythic">神話 (紅)</option>
           </select>
-          <label>道具圖片 (檔案名稱或網址)：</label>
-          <input type="text" id="grant-item-img" class="input-field" placeholder="例如：ticket.png 或網址">
+          <label>道具圖片檔名 (例如 homework1.png)：</label>
+          <input type="text" id="grant-item-img" class="input-field" placeholder="homework1.png">
         </div>
 
         <label>發放數量：</label>
@@ -443,6 +440,7 @@
         <div id="grant-status" style="margin-top:6px; font-size:0.85rem;"></div>
       </div>
 
+      <!-- 寶箱設定：純粹物品名稱＋點換圖選電腦檔案 (不顯示繁瑣的檔名框) -->
       <div id="tab-chestConfig" style="display:none; text-align:left;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <h4 style="margin:0; color:#ffd600;">🎁 11 款寶箱抽獎設定</h4>
@@ -474,7 +472,7 @@
 
         <div style="background:#1e1e1e; padding:10px; border-radius:8px; border:1px solid #444;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span style="font-size:0.85rem; color:#69f0ae; font-weight:bold;">物品池設定 (填寫檔名或選圖)</span>
+            <span style="font-size:0.85rem; color:#69f0ae; font-weight:bold;">物品池設定 (可上傳自訂圖片)</span>
             <div id="cfg-pool-tabs" style="display:flex; gap:4px;"></div>
           </div>
           <div id="cfg-items-list" style="max-height:180px; overflow-y:auto; font-size:0.8rem;"></div>
@@ -513,7 +511,6 @@
     </div>
   </div>
 
-  <!-- 唯一的登入彈窗 -->
   <div id="login-modal" class="modal">
     <div class="modal-box" style="text-align:center;">
       <h3>🎮 答題俄羅斯方塊</h3>
@@ -524,7 +521,6 @@
     </div>
   </div>
 
-  <!-- 學生自訂姓名確認視窗 -->
   <div id="name-modal" class="modal" style="display:none;">
     <div class="modal-box" style="text-align:center;">
       <h3 style="color:#4caf50;">✅ Google 帳號驗證成功！</h3>
@@ -534,7 +530,6 @@
     </div>
   </div>
 
-  <!-- 答題視窗 -->
   <div id="quiz-modal" class="modal" style="display:none;">
     <div class="modal-box">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:#333; padding:5px 8px; border-radius:6px;">
@@ -558,7 +553,6 @@
     </div>
   </div>
 
-  <!-- 回合結算選單 -->
   <div id="turn-modal" class="modal" style="display:none; align-items:flex-start; padding-top:40px;">
     <div class="modal-box" style="text-align:center;">
       <h3 style="color:#ffeb3b; margin:0 0 5px;">🎯 方塊已就位！</h3>
@@ -568,7 +562,6 @@
     </div>
   </div>
 
-  <!-- 到底放置防誤觸確認 -->
   <div id="drop-confirm-modal" class="modal" style="display:none; align-items:flex-start; padding-top:60px;">
     <div class="modal-box" style="text-align:center; max-width:320px;">
       <h3 style="color:#f44336; margin:0 0 10px;">⚠️ 確認到底放置？</h3>
@@ -581,7 +574,7 @@
   </div>
 
 <script>
-/* ==================== 1. 老師設定區 (請務必換成您的資訊) ==================== */
+/* ==================== 1. 老師設定區 ==================== */
 const GOOGLE_CLIENT_ID = "479239925260-p9kvntbmlp23ginho02tou72ckg0n9f1.apps.googleusercontent.com";
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4gsJeWiRma_jWSny0cvjlzCPGCY_A6Mz4qtP4dga7zZmFkxO1jm-sC8We8KCg3Cnu/exec";
 const TEACHER_EMAIL = "s256724@gmail.com";
@@ -742,7 +735,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   drawHoldCanvas();
 });
 
-// 【核心雙保險機制】：本機與雲端深度同步 (絕不掉分數、不回溯！)
 async function confirmStudentName() {
   const inputName = document.getElementById("custom-name-input").value.trim();
   if (!inputName) { alert("請輸入您的班級座號與姓名！"); return; }
@@ -760,7 +752,6 @@ async function confirmStudentName() {
     console.warn("雲端讀取稍慢，以本機防護備份接軌。");
   }
 
-  // 讀取本機毫秒級安全備份
   let localBackup = null;
   try {
     localBackup = JSON.parse(localStorage.getItem("tetris_local_save_" + userEmail));
@@ -774,7 +765,6 @@ async function confirmStudentName() {
   let fWrong = (cloudData && cloudData.wrongList && cloudData.wrongList !== "無 (全對)") ? cloudData.wrongList.split("; ") : [];
   let fClaimed = cloudData ? (cloudData.claimedMilestones || []) : [];
 
-  // 【斷線防護判定】：若本地備份分數更高（上次斷線沒送達雲端），以本機為準，保證學生絕不白做工！
   if (localBackup && localBackup.score > fScore) {
     fScore = localBackup.score;
     fCorrect = Math.max(fCorrect, localBackup.correctCount || 0);
@@ -783,7 +773,7 @@ async function confirmStudentName() {
     if (localBackup.qMastery) fMastery = localBackup.qMastery;
     if (localBackup.wrongList) fWrong = localBackup.wrongList;
     if (localBackup.claimedMilestones) fClaimed = localBackup.claimedMilestones;
-    setTimeout(autoSaveToCloud, 800); // 自動補傳雲端
+    setTimeout(autoSaveToCloud, 800);
   }
 
   totalScore = fScore;
@@ -809,7 +799,6 @@ async function confirmStudentName() {
   checkMilestoneAlerts();
 }
 
-// 毫秒級本機安全存檔
 function saveLocalBackup() {
   if (!userEmail) return;
   const backup = {
@@ -827,9 +816,8 @@ function saveLocalBackup() {
   localStorage.setItem("tetris_local_save_" + userEmail, JSON.stringify(backup));
 }
 
-// 雲端高頻自動存檔 (答題、消行、落定自動存檔，絕不覆蓋背包！)
 function autoSaveToCloud() {
-  saveLocalBackup(); // 0 毫秒本機保護
+  saveLocalBackup();
   if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("貼在這邊")) return;
 
   const wrongText = wrongQuestions.length > 0 ? wrongQuestions.join("; ") : "無 (全對)";
@@ -847,7 +835,7 @@ function autoSaveToCloud() {
       holdPiece: holdPieceType || "",
       claimedMilestones: claimedMilestones
     })
-  }).then(() => updateSideLeaderboard()).catch(e => console.warn("背景自動存檔暫時離線，由本機安全保護中。"));
+  }).then(() => updateSideLeaderboard()).catch(e => console.warn("背景自動存檔暫時離線。"));
 }
 
 async function loadQuestionsFromCloud() {
@@ -950,13 +938,11 @@ function triggerOpenChestWithAnimation(m, btnElement) {
   }, 1100);
 }
 
-// 領取成就鑰匙：後端原子操作，絕不回溯
 function collectKeyAnimation() {
   document.getElementById("open-chest-modal").style.display = "none";
   const m = currentOpeningMilestone;
   if (!m) return;
 
-  // 立即由後端原子領取
   fetch(GOOGLE_SCRIPT_URL, {
     method: "POST",
     body: JSON.stringify({
@@ -1078,7 +1064,7 @@ function renderBackpackItems() {
   });
 }
 
-/* ==================== 6. 【後端權威開箱 ➔ 火山噴發 ➔ 大幅放大卡片】 ==================== */
+/* ==================== 6. 開箱流程 ==================== */
 function promptUseKey(chestId) {
   const cDef = CHEST_DEFS.find(c => c.id === chestId);
   if (!cDef) return;
@@ -1100,12 +1086,11 @@ async function executeOpenChestSequence() {
   const cDef = pendingUseKeyData;
   if (!cDef) return;
 
-  const confirmBtn = document.querySelector("#use-key-confirm-modal button");
+  const confirmBtn = document.getElementById("btn-do-open-chest");
   confirmBtn.innerText = "開箱連線中...";
   confirmBtn.disabled = true;
 
   try {
-    // 後端原子結算 (0.2秒完成，後端扣鑰匙 + 抽道具)
     const res = await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
       body: JSON.stringify({
@@ -1125,7 +1110,6 @@ async function executeOpenChestSequence() {
       return;
     }
 
-    // 成功！同步最新扣除後背包
     currentLootQueue = data.loot || [];
     studentBackpack = data.updatedBackpack;
     saveLocalBackup();
@@ -1135,11 +1119,10 @@ async function executeOpenChestSequence() {
     confirmBtn.innerText = "✨ 立即開箱！";
     confirmBtn.disabled = false;
 
-    // 進入全螢幕開箱舞台
     startChestVisualAnimation(cDef);
 
   } catch(e) {
-    alert("連線伺服器失敗，請確認網路或試算表設定！");
+    alert("連線伺服器失敗，請檢查網路連線！");
     confirmBtn.innerText = "✨ 立即開箱！";
     confirmBtn.disabled = false;
   }
@@ -1169,7 +1152,6 @@ function startChestVisualAnimation(cDef) {
   showcase.innerHTML = "";
   flash.style.opacity = "0";
 
-  // 1.2 秒後：內部綻放光芒
   setTimeout(() => {
     glow.style.backgroundColor = highestR.color;
     glow.style.boxShadow = `0 0 160px 90px ${highestR.color}99`;
@@ -1179,7 +1161,6 @@ function startChestVisualAnimation(cDef) {
     rays.style.display = "block";
   }, 1200);
 
-  // 2.2 秒後：白光一閃，火山噴發飛向四周！
   setTimeout(() => {
     flash.style.opacity = "1";
     setTimeout(() => {
@@ -1190,7 +1171,6 @@ function startChestVisualAnimation(cDef) {
 
       playEruptionEffect(currentLootQueue);
 
-      // 噴發 1.1 秒後，聚焦放大檢視
       setTimeout(() => {
         eruptionContainer.style.transition = "opacity 0.4s ease-out";
         eruptionContainer.style.opacity = "0";
@@ -1286,7 +1266,7 @@ function confirmCurrentLootCard() {
   }, 320);
 }
 
-/* ==================== 7. 教師後台 ==================== */
+/* ==================== 7. 教師後台 (直覺換圖選電腦檔案) ==================== */
 function openAdmin() {
   document.getElementById("admin-modal").style.display = "flex";
   fetchClassScores();
@@ -1379,11 +1359,11 @@ async function submitGrantReward() {
       statusEl.innerHTML = `<b style="color:#f44336;">❌ 發放失敗：${data.msg || '伺服器未更新，請確認 Apps Script 已建立新版本部署！'}</b>`;
     }
   } catch(e) {
-    statusEl.innerHTML = `<b style="color:#f44336;">❌ 連線失敗！請檢查 Apps Script 是否有重新部署為「新版本」！</b>`;
+    statusEl.innerHTML = `<b style="color:#f44336;">❌ 連線失敗！請檢查網路連線。</b>`;
   }
 }
 
-// 寶箱設定面板 (改用超清簡短檔名)
+// 寶箱設定面板 (純粹點換圖選電腦檔案)
 let currentEditChestId = "chest_1k";
 let activePoolTab = "common";
 
@@ -1433,7 +1413,7 @@ function renderPoolTabs() {
   });
 }
 
-// 支援檔名直接填入與選圖自動帶入檔名 (超高畫質原圖載入)
+// 介面還原：左邊換圖選檔案 ➔ 右邊單純填寫物品名稱
 function renderPoolItems() {
   const list = document.getElementById("cfg-items-list");
   list.innerHTML = "";
@@ -1445,25 +1425,30 @@ function renderPoolItems() {
     const row = document.createElement("div");
     row.style.cssText = "display:flex; gap:6px; align-items:center; margin-bottom:6px; background:#292929; padding:4px 6px; border-radius:6px;";
     
-    // 直接載入 GitHub 同目錄圖片
     const previewHtml = it.image ? 
-      `<img src="${it.image}" style="width:34px; height:34px; object-fit:contain; border-radius:4px; border:1px solid #555; background:#111;" onerror="this.style.display='none'">` :
-      `<span style="font-size:0.7rem; color:#aaa; width:34px; text-align:center;">無圖</span>`;
+      `<img src="${it.image}" style="width:36px; height:36px; object-fit:contain; border-radius:4px; border:1px solid #555; background:#111;" onerror="this.style.display='none'">` :
+      `<span style="font-size:0.7rem; color:#aaa; width:36px; text-align:center;">無圖</span>`;
 
     row.innerHTML = `
       ${previewHtml}
-      <input type="text" value="${it.name}" placeholder="物品名稱" style="width:38%; background:#1e1e1e; color:#fff; border:1px solid #555; border-radius:4px; padding:4px; font-size:0.8rem;" onchange="updatePoolItemName(${idx}, this.value)">
-      <input type="text" value="${it.image || ''}" placeholder="圖片檔名 (例如 homework1.png)" style="flex:1; background:#1e1e1e; color:#ffeb3b; border:1px solid #555; border-radius:4px; padding:4px; font-size:0.75rem;" onchange="updatePoolItemImageDirect(${idx}, this.value)">
+      <label style="cursor:pointer; background:#555; color:#fff; border-radius:4px; padding:4px 6px; font-size:0.72rem; white-space:nowrap;" title="點此選取電腦裡的圖片">
+        換圖
+        <input type="file" accept="image/*" style="display:none;" onchange="handleSelectFileForPool(${idx}, this.files[0])">
+      </label>
+      <input type="text" value="${it.name}" placeholder="請在此輸入物品名稱..." style="flex:1; background:#1e1e1e; color:#fff; border:1px solid #555; border-radius:4px; padding:5px 8px; font-size:0.85rem;" onchange="updatePoolItemName(${idx}, this.value)">
       <button style="background:#d32f2f; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer;" onclick="removePoolItem(${idx})">✕</button>
     `;
     list.appendChild(row);
   });
 }
 
-function updatePoolItemImageDirect(idx, fileName) {
+// 選取電腦檔案時：自動在後台記住檔案名稱並切換預覽
+function handleSelectFileForPool(idx, file) {
+  if (!file) return;
   if (!cloudChestConfigs[currentEditChestId]) cloudChestConfigs[currentEditChestId] = { pools: {} };
   if (!cloudChestConfigs[currentEditChestId].pools[activePoolTab]) cloudChestConfigs[currentEditChestId].pools[activePoolTab] = [];
-  cloudChestConfigs[currentEditChestId].pools[activePoolTab][idx].image = fileName.trim();
+
+  cloudChestConfigs[currentEditChestId].pools[activePoolTab][idx].image = file.name;
   renderPoolItems();
 }
 
@@ -1474,7 +1459,7 @@ function updatePoolItemName(idx, val) {
 function addPoolItem() {
   if (!cloudChestConfigs[currentEditChestId]) cloudChestConfigs[currentEditChestId] = { pools: {} };
   if (!cloudChestConfigs[currentEditChestId].pools[activePoolTab]) cloudChestConfigs[currentEditChestId].pools[activePoolTab] = [];
-  cloudChestConfigs[currentEditChestId].pools[activePoolTab].push({ name: "新裝備", image: "" });
+  cloudChestConfigs[currentEditChestId].pools[activePoolTab].push({ name: "", image: "" });
   renderPoolItems();
 }
 function removePoolItem(idx) {
@@ -1512,11 +1497,11 @@ async function saveSelectedChestConfig() {
         pools: pools
       })
     });
-    statusEl.innerHTML = `<b style="color:#4caf50;">🎉 寶箱設定與圖片檔名已成功同步至雲端試算表！</b>`;
+    statusEl.innerHTML = `<b style="color:#4caf50;">🎉 寶箱設定與物品圖片已成功同步至雲端試算表！</b>`;
   } catch(e) { statusEl.innerText = "❌ 儲存失敗！"; }
 }
 
-/* ==================== 8. 題庫管理、Excel 匯入與排行 ==================== */
+/* ==================== 8. 題庫與排行榜 ==================== */
 async function fetchClassScores() {
   const tbody = document.getElementById("scores-tbody");
   tbody.innerHTML = `<tr><td colspan="5">更新數據中...</td></tr>`;
@@ -1793,7 +1778,7 @@ function processAnswerResult(isRight, correctAnswerText) {
     nextBtn.innerText = "下一題 ➡️";
   }
   nextBtn.style.display = "block";
-  autoSaveToCloud(); // 立即本機備份＋雲端背景存檔
+  autoSaveToCloud();
 }
 
 function handleAfterAnswer() {
