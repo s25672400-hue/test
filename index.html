@@ -1161,17 +1161,20 @@ function showNextLootCard(isFirst = false) {
   const showcase = document.getElementById("single-card-showcase");
 
   if (currentLootIndex >= currentLootQueue.length) {
-    if (!studentBackpack.items) studentBackpack.items = [];
-    currentLootQueue.forEach(it => studentBackpack.items.push(it));
-
     const cDef = pendingUseKeyData;
+    
+    // 【核心修復】：將開箱結果送往後端，後端親自扣除鑰匙，並回傳扣款後的最新背包！
     fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
       body: JSON.stringify({
         action: "openChestLog", email: userEmail, name: userName,
         chestName: cDef.name, keyUsed: cDef.key,
-        itemsObtained: currentLootQueue, updatedBackpack: studentBackpack
+        itemsObtained: currentLootQueue
       })
+    }).then(res => res.json()).then(data => {
+      if (data && data.updatedBackpack) {
+        studentBackpack = data.updatedBackpack; // 同步後端扣除後的精確背包
+      }
     });
 
     document.getElementById("chest-animation-stage").style.display = "none";
