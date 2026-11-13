@@ -1105,7 +1105,7 @@ async function executeOpenChestSequence() {
   confirmBtn.disabled = true;
 
   try {
-    // 【核心改造】：第一秒由後端原子操作扣款並生成隨機道具，絕不丟失！
+    // 後端原子結算 (0.2秒完成，後端扣鑰匙 + 抽道具)
     const res = await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
       body: JSON.stringify({
@@ -1125,7 +1125,7 @@ async function executeOpenChestSequence() {
       return;
     }
 
-    // 成功！同步最新扣款後背包
+    // 成功！同步最新扣除後背包
     currentLootQueue = data.loot || [];
     studentBackpack = data.updatedBackpack;
     saveLocalBackup();
@@ -1139,7 +1139,7 @@ async function executeOpenChestSequence() {
     startChestVisualAnimation(cDef);
 
   } catch(e) {
-    alert("連線伺服器失敗，請確認網路！");
+    alert("連線伺服器失敗，請確認網路或試算表設定！");
     confirmBtn.innerText = "✨ 立即開箱！";
     confirmBtn.disabled = false;
   }
@@ -1438,13 +1438,14 @@ function renderPoolItems() {
   const list = document.getElementById("cfg-items-list");
   list.innerHTML = "";
   const c = cloudChestConfigs[currentEditChestId];
-  const pools = (c && c.pools) ? c.pools : { common: [{name: '粗鐵劍', image: 'sword.png'}] };
+  const pools = (c && c.pools) ? c.pools : { common: [{name: '銘謝惠顧', image: 'Sorry.png'}] };
   if (!pools[activePoolTab]) pools[activePoolTab] = [];
 
   pools[activePoolTab].forEach((it, idx) => {
     const row = document.createElement("div");
     row.style.cssText = "display:flex; gap:6px; align-items:center; margin-bottom:6px; background:#292929; padding:4px 6px; border-radius:6px;";
     
+    // 直接載入 GitHub 同目錄圖片
     const previewHtml = it.image ? 
       `<img src="${it.image}" style="width:34px; height:34px; object-fit:contain; border-radius:4px; border:1px solid #555; background:#111;" onerror="this.style.display='none'">` :
       `<span style="font-size:0.7rem; color:#aaa; width:34px; text-align:center;">無圖</span>`;
@@ -1452,21 +1453,11 @@ function renderPoolItems() {
     row.innerHTML = `
       ${previewHtml}
       <input type="text" value="${it.name}" placeholder="物品名稱" style="width:38%; background:#1e1e1e; color:#fff; border:1px solid #555; border-radius:4px; padding:4px; font-size:0.8rem;" onchange="updatePoolItemName(${idx}, this.value)">
-      <input type="text" value="${it.image || ''}" placeholder="圖片檔名 (如 sword.png)" style="flex:1; background:#1e1e1e; color:#ffeb3b; border:1px solid #555; border-radius:4px; padding:4px; font-size:0.78rem;" onchange="updatePoolItemImageDirect(${idx}, this.value)">
-      <label style="cursor:pointer; background:#555; color:#fff; border-radius:4px; padding:4px 6px; font-size:0.7rem; white-space:nowrap;" title="選取圖片並自動帶入檔名">
-        選圖
-        <input type="file" accept="image/*" style="display:none;" onchange="handlePickFileForPool(${idx}, this.files[0])">
-      </label>
+      <input type="text" value="${it.image || ''}" placeholder="圖片檔名 (例如 homework1.png)" style="flex:1; background:#1e1e1e; color:#ffeb3b; border:1px solid #555; border-radius:4px; padding:4px; font-size:0.75rem;" onchange="updatePoolItemImageDirect(${idx}, this.value)">
       <button style="background:#d32f2f; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer;" onclick="removePoolItem(${idx})">✕</button>
     `;
     list.appendChild(row);
   });
-}
-
-function handlePickFileForPool(idx, file) {
-  if (!file) return;
-  updatePoolItemImageDirect(idx, file.name);
-  alert(`已自動帶入圖片檔名：【${file.name}】！\n請記得將同名圖片上傳至 GitHub 倉庫的同一個目錄下，就能以超高畫質顯示！`);
 }
 
 function updatePoolItemImageDirect(idx, fileName) {
