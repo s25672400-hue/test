@@ -207,10 +207,8 @@
       45% { transform: translateY(calc(-50% + var(--peak-y, -200px))) scale(1.1); animation-timing-function: ease-in; }
       100% { transform: translateY(calc(-50% + var(--ty))) scale(1); opacity: 1; }
     }
-
     @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .anim-rays { animation: spin-slow 18s linear infinite; }
-
     @keyframes pulse-intense {
       0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
       50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
@@ -434,6 +432,8 @@
             <option value="epic">罕見 (紫)</option><option value="legendary">傳說 (金)</option>
             <option value="mythic">神話 (紅)</option>
           </select>
+          <label>道具圖片 (檔案名稱或網址)：</label>
+          <input type="text" id="grant-item-img" class="input-field" placeholder="例如：ticket.png 或網址">
         </div>
 
         <label>發放數量：</label>
@@ -474,7 +474,7 @@
 
         <div style="background:#1e1e1e; padding:10px; border-radius:8px; border:1px solid #444;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span style="font-size:0.85rem; color:#69f0ae; font-weight:bold;">物品池設定 (可上傳圖片)</span>
+            <span style="font-size:0.85rem; color:#69f0ae; font-weight:bold;">物品池設定 (填寫檔名或選圖)</span>
             <div id="cfg-pool-tabs" style="display:flex; gap:4px;"></div>
           </div>
           <div id="cfg-items-list" style="max-height:180px; overflow-y:auto; font-size:0.8rem;"></div>
@@ -513,7 +513,7 @@
     </div>
   </div>
 
-  <!-- 【唯一的 Google 登入彈窗】 -->
+  <!-- 唯一的登入彈窗 -->
   <div id="login-modal" class="modal">
     <div class="modal-box" style="text-align:center;">
       <h3>🎮 答題俄羅斯方塊</h3>
@@ -524,7 +524,7 @@
     </div>
   </div>
 
-  <!-- 【唯一的 學生自訂姓名確認視窗】 -->
+  <!-- 學生自訂姓名確認視窗 -->
   <div id="name-modal" class="modal" style="display:none;">
     <div class="modal-box" style="text-align:center;">
       <h3 style="color:#4caf50;">✅ Google 帳號驗證成功！</h3>
@@ -534,7 +534,7 @@
     </div>
   </div>
 
-  <!-- 【唯一的 答題視窗】 -->
+  <!-- 答題視窗 -->
   <div id="quiz-modal" class="modal" style="display:none;">
     <div class="modal-box">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:#333; padding:5px 8px; border-radius:6px;">
@@ -558,7 +558,7 @@
     </div>
   </div>
 
-  <!-- 【唯一的 回合結算選單】 -->
+  <!-- 回合結算選單 -->
   <div id="turn-modal" class="modal" style="display:none; align-items:flex-start; padding-top:40px;">
     <div class="modal-box" style="text-align:center;">
       <h3 style="color:#ffeb3b; margin:0 0 5px;">🎯 方塊已就位！</h3>
@@ -568,7 +568,7 @@
     </div>
   </div>
 
-  <!-- 【唯一的 到底放置防誤觸確認】 -->
+  <!-- 到底放置防誤觸確認 -->
   <div id="drop-confirm-modal" class="modal" style="display:none; align-items:flex-start; padding-top:60px;">
     <div class="modal-box" style="text-align:center; max-width:320px;">
       <h3 style="color:#f44336; margin:0 0 10px;">⚠️ 確認到底放置？</h3>
@@ -582,15 +582,12 @@
 
 <script>
 /* ==================== 1. 老師設定區 (請務必換成您的資訊) ==================== */
-const GOOGLE_CLIENT_ID = "479239925260-p9kvntbmlp23ginho02tou72ckg0n9f1.apps.googleusercontent.com";
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4gsJeWiRma_jWSny0cvjlzCPGCY_A6Mz4qtP4dga7zZmFkxO1jm-sC8We8KCg3Cnu/exec";
-const TEACHER_EMAIL = "s256724@gmail.com"; // 請換成您的登入 Gmail！
+const GOOGLE_CLIENT_ID = "您的_GOOGLE_CLIENT_ID_貼在這邊";
+const GOOGLE_SCRIPT_URL = "您的_GOOGLE_SCRIPT_網址_貼在這邊";
+const TEACHER_EMAIL = "teacher@gmail.com";
 
-// 自我診斷防呆：防止未填寫造成整頁崩潰
 if (GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("貼在這邊")) {
   document.getElementById("g_id_onload").setAttribute("data-client_id", GOOGLE_CLIENT_ID);
-} else {
-  console.warn("尚未填寫 GOOGLE_CLIENT_ID！");
 }
 
 /* ==================== 2. 寶箱與品級設定 ==================== */
@@ -715,7 +712,6 @@ function logoutTeacher() {
   }
 }
 
-// 增強容錯：啟動時安全檢查，絕不卡死
 window.addEventListener("DOMContentLoaded", async () => {
   let autoLoginSuccess = false;
   const saved = localStorage.getItem("remembered_teacher");
@@ -738,7 +734,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // 若非自動登入老師，保證 Google 登入彈窗一定看得見！
   if (!autoLoginSuccess) {
     document.getElementById("login-modal").style.display = "flex";
   }
@@ -747,40 +742,112 @@ window.addEventListener("DOMContentLoaded", async () => {
   drawHoldCanvas();
 });
 
+// 【核心雙保險機制】：本機與雲端深度同步 (絕不掉分數、不回溯！)
 async function confirmStudentName() {
   const inputName = document.getElementById("custom-name-input").value.trim();
   if (!inputName) { alert("請輸入您的班級座號與姓名！"); return; }
   userName = inputName;
   document.getElementById("name-modal").style.display = "none";
 
+  let cloudData = null;
   try {
     const res = await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
       body: JSON.stringify({ action: "login", email: userEmail, name: userName })
     });
-    const data = await res.json();
-    if (data.status === "success" || data.status === "new_user") {
-      totalScore = data.score || 0;
-      correctCount = data.correctCount || 0;
-      if (data.wrongList && data.wrongList !== "無 (全對)") wrongQuestions = data.wrongList.split("; ");
-      if (data.arena && data.arena.length > 0) arena = data.arena;
-      if (data.qMastery) qMasteryStats = data.qMastery;
-      if (data.holdPiece) { holdPieceType = data.holdPiece; drawHoldCanvas(); }
-      claimedMilestones = data.claimedMilestones || [];
-      studentBackpack = data.backpack || { keys: {}, items: [] };
-      cloudChestConfigs = data.chestConfigs || {};
-      notifiedMilestones = [...claimedMilestones];
-    }
+    cloudData = await res.json();
   } catch (e) {
-    console.warn("離線或連線試算表失敗，以本地模式啟動。");
+    console.warn("雲端讀取稍慢，以本機防護備份接軌。");
+  }
+
+  // 讀取本機毫秒級安全備份
+  let localBackup = null;
+  try {
+    localBackup = JSON.parse(localStorage.getItem("tetris_local_save_" + userEmail));
+  } catch(e){}
+
+  let fScore = (cloudData && cloudData.score) ? cloudData.score : 0;
+  let fCorrect = (cloudData && cloudData.correctCount) ? cloudData.correctCount : 0;
+  let fArena = cloudData ? cloudData.arena : null;
+  let fHold = cloudData ? (cloudData.holdPiece || "") : "";
+  let fMastery = cloudData ? (cloudData.qMastery || {}) : {};
+  let fWrong = (cloudData && cloudData.wrongList && cloudData.wrongList !== "無 (全對)") ? cloudData.wrongList.split("; ") : [];
+  let fClaimed = cloudData ? (cloudData.claimedMilestones || []) : [];
+
+  // 【斷線防護判定】：若本地備份分數更高（上次斷線沒送達雲端），以本機為準，保證學生絕不白做工！
+  if (localBackup && localBackup.score > fScore) {
+    fScore = localBackup.score;
+    fCorrect = Math.max(fCorrect, localBackup.correctCount || 0);
+    if (localBackup.arena && localBackup.arena.length > 0) fArena = localBackup.arena;
+    if (localBackup.holdPiece) fHold = localBackup.holdPiece;
+    if (localBackup.qMastery) fMastery = localBackup.qMastery;
+    if (localBackup.wrongList) fWrong = localBackup.wrongList;
+    if (localBackup.claimedMilestones) fClaimed = localBackup.claimedMilestones;
+    setTimeout(autoSaveToCloud, 800); // 自動補傳雲端
+  }
+
+  totalScore = fScore;
+  correctCount = fCorrect;
+  arena = (fArena && fArena.length > 0) ? fArena : createMatrix(12, 20);
+  holdPieceType = fHold;
+  qMasteryStats = fMastery;
+  wrongQuestions = fWrong;
+  claimedMilestones = fClaimed;
+  notifiedMilestones = [...claimedMilestones];
+
+  if (cloudData) {
+    studentBackpack = cloudData.backpack || { keys: {}, items: [] };
+    cloudChestConfigs = cloudData.chestConfigs || {};
   }
 
   document.getElementById("display-name").innerText = userName;
   updateScoreUI();
   draw();
+  drawHoldCanvas();
   openQuiz();
   updateSideLeaderboard();
   checkMilestoneAlerts();
+}
+
+// 毫秒級本機安全存檔
+function saveLocalBackup() {
+  if (!userEmail) return;
+  const backup = {
+    email: userEmail,
+    name: userName,
+    score: totalScore,
+    correctCount: correctCount,
+    arena: arena,
+    holdPiece: holdPieceType,
+    qMastery: qMasteryStats,
+    wrongList: wrongQuestions,
+    claimedMilestones: claimedMilestones,
+    timestamp: Date.now()
+  };
+  localStorage.setItem("tetris_local_save_" + userEmail, JSON.stringify(backup));
+}
+
+// 雲端高頻自動存檔 (答題、消行、落定自動存檔，絕不覆蓋背包！)
+function autoSaveToCloud() {
+  saveLocalBackup(); // 0 毫秒本機保護
+  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("貼在這邊")) return;
+
+  const wrongText = wrongQuestions.length > 0 ? wrongQuestions.join("; ") : "無 (全對)";
+  fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "saveScore",
+      email: userEmail,
+      name: userName,
+      score: totalScore,
+      correctCount: correctCount,
+      wrongList: wrongText,
+      arena: arena,
+      qMastery: qMasteryStats,
+      holdPiece: holdPieceType || "",
+      claimedMilestones: claimedMilestones
+    })
+  }).then(() => updateSideLeaderboard()).catch(e => console.warn("背景自動存檔暫時離線，由本機安全保護中。"));
 }
 
 async function loadQuestionsFromCloud() {
@@ -883,22 +950,33 @@ function triggerOpenChestWithAnimation(m, btnElement) {
   }, 1100);
 }
 
+// 領取成就鑰匙：後端原子操作，絕不回溯
 function collectKeyAnimation() {
   document.getElementById("open-chest-modal").style.display = "none";
   const m = currentOpeningMilestone;
   if (!m) return;
 
-  claimedMilestones.push(m.score);
+  // 立即由後端原子領取
+  fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "claimMilestone",
+      email: userEmail,
+      name: userName,
+      score: m.score,
+      keyName: m.key,
+      keyCount: m.count
+    })
+  }).then(res => res.json()).then(data => {
+    if (data.status === "claimed") {
+      claimedMilestones = data.claimedMilestones;
+      studentBackpack = data.updatedBackpack;
+      saveLocalBackup();
+    }
+  });
 
-  if (!studentBackpack.keys) studentBackpack.keys = {};
-  if (!studentBackpack.keys[m.key]) {
-    studentBackpack.keys[m.key] = { count: 0, history: [] };
-  }
-  studentBackpack.keys[m.key].count += m.count;
-  const nowStr = new Date().toLocaleString('zh-TW', { hour12: false });
-  for (let k = 0; k < m.count; k++) {
-    studentBackpack.keys[m.key].history.push(nowStr);
-  }
+  claimedMilestones.push(m.score);
+  saveLocalBackup();
 
   const tempBag = document.getElementById("temp-target-bag");
   tempBag.style.display = "flex";
@@ -926,8 +1004,6 @@ function collectKeyAnimation() {
       tempBag.style.display = "none";
       tempBag.classList.remove("bag-bump");
     }, 600);
-
-    autoSaveToCloud();
     renderRewardPage(currentRewardPageIndex);
   }, 1750);
 }
@@ -1002,7 +1078,7 @@ function renderBackpackItems() {
   });
 }
 
-/* ==================== 6. 【火山噴發 ➔ 大幅放大卡片 ➔ 換卡縮放演算法】 ==================== */
+/* ==================== 6. 【後端權威開箱 ➔ 火山噴發 ➔ 大幅放大卡片】 ==================== */
 function promptUseKey(chestId) {
   const cDef = CHEST_DEFS.find(c => c.id === chestId);
   if (!cDef) return;
@@ -1020,53 +1096,60 @@ function closeUseKeyConfirm() {
 let currentLootQueue = [];
 let currentLootIndex = 0;
 
-function executeOpenChestSequence() {
-  closeUseKeyConfirm();
-  closeBackpackModal();
-
+async function executeOpenChestSequence() {
   const cDef = pendingUseKeyData;
   if (!cDef) return;
 
-  if (!studentBackpack.keys[cDef.key] || studentBackpack.keys[cDef.key].count <= 0) {
-    alert("鑰匙不足！"); return;
-  }
-  studentBackpack.keys[cDef.key].count--;
+  const confirmBtn = document.querySelector("#use-key-confirm-modal button");
+  confirmBtn.innerText = "開箱連線中...";
+  confirmBtn.disabled = true;
 
-  const cConfig = (cloudChestConfigs && cloudChestConfigs[cDef.id]) ? cloudChestConfigs[cDef.id] : null;
-  const probs = (cConfig && cConfig.probs) ? cConfig.probs : { common: 75, rare: 18, epic: 5, legendary: 1.5, mythic: 0.5 };
-  const pools = (cConfig && cConfig.pools) ? cConfig.pools : {
-    common: [{name: '粗鐵劍', image: null}, {name: '木盾', image: null}],
-    rare: [{name: '鋼鐵護甲', image: null}],
-    epic: [{name: '烈焰長槍', image: null}],
-    legendary: [{name: '王者聖劍', image: null}],
-    mythic: [{name: '星辰神杖', image: null}]
-  };
-  const dropAmount = (cConfig && cConfig.dropConfig && cConfig.dropConfig.dropMode === 'fixed') ? cConfig.dropConfig.dropAmount : 3;
-
-  currentLootQueue = [];
-  let highestR = RARITIES.COMMON;
-
-  for (let i = 0; i < dropAmount; i++) {
-    const roll = Math.random() * 100;
-    let rKey = 'COMMON';
-    if (roll < probs.mythic) rKey = 'MYTHIC';
-    else if (roll < probs.mythic + probs.legendary) rKey = 'LEGENDARY';
-    else if (roll < probs.mythic + probs.legendary + probs.epic) rKey = 'EPIC';
-    else if (roll < probs.mythic + probs.legendary + probs.epic + probs.rare) rKey = 'RARE';
-
-    const rData = RARITIES[rKey];
-    if (rData.rank > highestR.rank) highestR = rData;
-
-    const pList = (pools[rData.id] && pools[rData.id].length > 0) ? pools[rData.id] : [{name: '冒險硬幣', image: null}];
-    const picked = pList[Math.floor(Math.random() * pList.length)];
-    currentLootQueue.push({
-      name: picked.name,
-      image: picked.image || null,
-      rarity: rData,
-      obtainedTime: new Date().toLocaleString('zh-TW', { hour12: false }),
-      chestSource: cDef.name
+  try {
+    // 【核心改造】：第一秒由後端原子操作扣款並生成隨機道具，絕不丟失！
+    const res = await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "openChest",
+        email: userEmail,
+        name: userName,
+        chestId: cDef.id,
+        keyUsed: cDef.key
+      })
     });
+    const data = await res.json();
+
+    if (data.status === "error") {
+      alert(data.msg || "開箱失敗！");
+      confirmBtn.innerText = "✨ 立即開箱！";
+      confirmBtn.disabled = false;
+      return;
+    }
+
+    // 成功！同步最新扣款後背包
+    currentLootQueue = data.loot || [];
+    studentBackpack = data.updatedBackpack;
+    saveLocalBackup();
+
+    closeUseKeyConfirm();
+    closeBackpackModal();
+    confirmBtn.innerText = "✨ 立即開箱！";
+    confirmBtn.disabled = false;
+
+    // 進入全螢幕開箱舞台
+    startChestVisualAnimation(cDef);
+
+  } catch(e) {
+    alert("連線伺服器失敗，請確認網路！");
+    confirmBtn.innerText = "✨ 立即開箱！";
+    confirmBtn.disabled = false;
   }
+}
+
+function startChestVisualAnimation(cDef) {
+  let highestR = RARITIES.COMMON;
+  currentLootQueue.forEach(it => {
+    if (it.rarity && it.rarity.rank > highestR.rank) highestR = it.rarity;
+  });
 
   const stage = document.getElementById("chest-animation-stage");
   const chestImg = document.getElementById("anim-chest-img");
@@ -1086,6 +1169,7 @@ function executeOpenChestSequence() {
   showcase.innerHTML = "";
   flash.style.opacity = "0";
 
+  // 1.2 秒後：內部綻放光芒
   setTimeout(() => {
     glow.style.backgroundColor = highestR.color;
     glow.style.boxShadow = `0 0 160px 90px ${highestR.color}99`;
@@ -1095,6 +1179,7 @@ function executeOpenChestSequence() {
     rays.style.display = "block";
   }, 1200);
 
+  // 2.2 秒後：白光一閃，火山噴發飛向四周！
   setTimeout(() => {
     flash.style.opacity = "1";
     setTimeout(() => {
@@ -1105,6 +1190,7 @@ function executeOpenChestSequence() {
 
       playEruptionEffect(currentLootQueue);
 
+      // 噴發 1.1 秒後，聚焦放大檢視
       setTimeout(() => {
         eruptionContainer.style.transition = "opacity 0.4s ease-out";
         eruptionContainer.style.opacity = "0";
@@ -1161,22 +1247,6 @@ function showNextLootCard(isFirst = false) {
   const showcase = document.getElementById("single-card-showcase");
 
   if (currentLootIndex >= currentLootQueue.length) {
-    const cDef = pendingUseKeyData;
-    
-    // 【核心修復】：將開箱結果送往後端，後端親自扣除鑰匙，並回傳扣款後的最新背包！
-    fetch(GOOGLE_SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "openChestLog", email: userEmail, name: userName,
-        chestName: cDef.name, keyUsed: cDef.key,
-        itemsObtained: currentLootQueue
-      })
-    }).then(res => res.json()).then(data => {
-      if (data && data.updatedBackpack) {
-        studentBackpack = data.updatedBackpack; // 同步後端扣除後的精確背包
-      }
-    });
-
     document.getElementById("chest-animation-stage").style.display = "none";
     document.getElementById("anim-chest-img").style.display = "block";
     document.getElementById("anim-chest-img").className = "";
@@ -1276,15 +1346,14 @@ async function submitGrantReward() {
 
   if (!targetEmail) { alert("請先選擇目標學生！"); return; }
 
-  let rewardName = "";
-  let rarity = null;
-
+  let rewardName = "", rarity = null, itemImg = "";
   if (rewardType === "key") {
     rewardName = document.getElementById("grant-key-sel").value;
   } else {
     rewardName = document.getElementById("grant-item-name").value.trim();
     const rKey = document.getElementById("grant-item-rarity").value.toUpperCase();
     rarity = RARITIES[rKey];
+    itemImg = document.getElementById("grant-item-img").value.trim();
     if (!rewardName) { alert("請填寫道具名稱！"); return; }
   }
 
@@ -1299,7 +1368,8 @@ async function submitGrantReward() {
         rewardType: rewardType,
         rewardName: rewardName,
         amount: amount,
-        rarity: rarity
+        rarity: rarity,
+        image: itemImg
       })
     });
     const data = await res.json();
@@ -1313,29 +1383,7 @@ async function submitGrantReward() {
   }
 }
 
-function compressImageToBase64(file, callback) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const MAX_SIZE = 80; // 縮至 80px 極輕量圖標
-      let width = img.width, height = img.height;
-      if (width > height && width > MAX_SIZE) {
-        height *= MAX_SIZE / width; width = MAX_SIZE;
-      } else if (height > MAX_SIZE) {
-        width *= MAX_SIZE / height; height = MAX_SIZE;
-      }
-      canvas.width = width; canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
-      callback(canvas.toDataURL('image/jpeg', 0.6)); // 輕量壓縮，保證不爆試算表格
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
+// 寶箱設定面板 (改用超清簡短檔名)
 let currentEditChestId = "chest_1k";
 let activePoolTab = "common";
 
@@ -1385,11 +1433,12 @@ function renderPoolTabs() {
   });
 }
 
+// 支援檔名直接填入與選圖自動帶入檔名 (超高畫質原圖載入)
 function renderPoolItems() {
   const list = document.getElementById("cfg-items-list");
   list.innerHTML = "";
   const c = cloudChestConfigs[currentEditChestId];
-  const pools = (c && c.pools) ? c.pools : { common: [{name: '粗鐵劍', image: null}] };
+  const pools = (c && c.pools) ? c.pools : { common: [{name: '粗鐵劍', image: 'sword.png'}] };
   if (!pools[activePoolTab]) pools[activePoolTab] = [];
 
   pools[activePoolTab].forEach((it, idx) => {
@@ -1397,29 +1446,34 @@ function renderPoolItems() {
     row.style.cssText = "display:flex; gap:6px; align-items:center; margin-bottom:6px; background:#292929; padding:4px 6px; border-radius:6px;";
     
     const previewHtml = it.image ? 
-      `<img src="${it.image}" style="width:36px; height:36px; object-fit:contain; border-radius:4px; border:1px solid #555;">` :
-      `<span style="font-size:0.7rem; color:#aaa; width:36px; text-align:center;">無圖</span>`;
+      `<img src="${it.image}" style="width:34px; height:34px; object-fit:contain; border-radius:4px; border:1px solid #555; background:#111;" onerror="this.style.display='none'">` :
+      `<span style="font-size:0.7rem; color:#aaa; width:34px; text-align:center;">無圖</span>`;
 
     row.innerHTML = `
-      <label style="cursor:pointer; display:flex; align-items:center; gap:3px;" title="點此更換圖片">
-        ${previewHtml}
-        <span style="font-size:0.65rem; background:#444; color:#fff; border-radius:4px; padding:2px 4px;">換圖</span>
-        <input type="file" accept="image/*" style="display:none;" onchange="uploadPoolItemImage(${idx}, this.files[0])">
+      ${previewHtml}
+      <input type="text" value="${it.name}" placeholder="物品名稱" style="width:38%; background:#1e1e1e; color:#fff; border:1px solid #555; border-radius:4px; padding:4px; font-size:0.8rem;" onchange="updatePoolItemName(${idx}, this.value)">
+      <input type="text" value="${it.image || ''}" placeholder="圖片檔名 (如 sword.png)" style="flex:1; background:#1e1e1e; color:#ffeb3b; border:1px solid #555; border-radius:4px; padding:4px; font-size:0.78rem;" onchange="updatePoolItemImageDirect(${idx}, this.value)">
+      <label style="cursor:pointer; background:#555; color:#fff; border-radius:4px; padding:4px 6px; font-size:0.7rem; white-space:nowrap;" title="選取圖片並自動帶入檔名">
+        選圖
+        <input type="file" accept="image/*" style="display:none;" onchange="handlePickFileForPool(${idx}, this.files[0])">
       </label>
-      <input type="text" value="${it.name}" style="flex:1; background:#1e1e1e; color:#fff; border:1px solid #555; border-radius:4px; padding:4px; font-size:0.8rem;" onchange="updatePoolItemName(${idx}, this.value)">
       <button style="background:#d32f2f; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer;" onclick="removePoolItem(${idx})">✕</button>
     `;
     list.appendChild(row);
   });
 }
 
-function uploadPoolItemImage(idx, file) {
+function handlePickFileForPool(idx, file) {
   if (!file) return;
-  compressImageToBase64(file, (base64) => {
-    if (!cloudChestConfigs[currentEditChestId]) cloudChestConfigs[currentEditChestId] = { pools: {} };
-    cloudChestConfigs[currentEditChestId].pools[activePoolTab][idx].image = base64;
-    renderPoolItems();
-  });
+  updatePoolItemImageDirect(idx, file.name);
+  alert(`已自動帶入圖片檔名：【${file.name}】！\n請記得將同名圖片上傳至 GitHub 倉庫的同一個目錄下，就能以超高畫質顯示！`);
+}
+
+function updatePoolItemImageDirect(idx, fileName) {
+  if (!cloudChestConfigs[currentEditChestId]) cloudChestConfigs[currentEditChestId] = { pools: {} };
+  if (!cloudChestConfigs[currentEditChestId].pools[activePoolTab]) cloudChestConfigs[currentEditChestId].pools[activePoolTab] = [];
+  cloudChestConfigs[currentEditChestId].pools[activePoolTab][idx].image = fileName.trim();
+  renderPoolItems();
 }
 
 function updatePoolItemName(idx, val) {
@@ -1429,7 +1483,7 @@ function updatePoolItemName(idx, val) {
 function addPoolItem() {
   if (!cloudChestConfigs[currentEditChestId]) cloudChestConfigs[currentEditChestId] = { pools: {} };
   if (!cloudChestConfigs[currentEditChestId].pools[activePoolTab]) cloudChestConfigs[currentEditChestId].pools[activePoolTab] = [];
-  cloudChestConfigs[currentEditChestId].pools[activePoolTab].push({ name: "新裝備", image: null });
+  cloudChestConfigs[currentEditChestId].pools[activePoolTab].push({ name: "新裝備", image: "" });
   renderPoolItems();
 }
 function removePoolItem(idx) {
@@ -1467,7 +1521,7 @@ async function saveSelectedChestConfig() {
         pools: pools
       })
     });
-    statusEl.innerHTML = `<b style="color:#4caf50;">🎉 寶箱與物品圖片已成功同步至雲端試算表！</b>`;
+    statusEl.innerHTML = `<b style="color:#4caf50;">🎉 寶箱設定與圖片檔名已成功同步至雲端試算表！</b>`;
   } catch(e) { statusEl.innerText = "❌ 儲存失敗！"; }
 }
 
@@ -1748,7 +1802,7 @@ function processAnswerResult(isRight, correctAnswerText) {
     nextBtn.innerText = "下一題 ➡️";
   }
   nextBtn.style.display = "block";
-  autoSaveToCloud();
+  autoSaveToCloud(); // 立即本機備份＋雲端背景存檔
 }
 
 function handleAfterAnswer() {
@@ -1776,7 +1830,7 @@ function showTurnOptions() {
 function continueToNextQuiz() { document.getElementById("turn-modal").style.display = "none"; openQuiz(); }
 function saveAndExit() { autoSaveToCloud(); alert("進度已完整同步！"); location.reload(); }
 
-/* ==================== 10. 排行榜、暫存方塊與雲端同步 ==================== */
+/* ==================== 10. 排行榜 ==================== */
 async function updateSideLeaderboard() {
   const box = document.getElementById("rank-list-box");
   try {
@@ -1796,21 +1850,6 @@ async function updateSideLeaderboard() {
       box.innerHTML = html;
     } else { box.innerHTML = `<div style="color:#aaa; text-align:center;">暫無排名</div>`; }
   } catch (e) { box.innerHTML = `<div style="color:#888; text-align:center;">更新中...</div>`; }
-}
-
-function autoSaveToCloud() {
-  const wrongText = wrongQuestions.length > 0 ? wrongQuestions.join("; ") : "無 (全對)";
-  fetch(GOOGLE_SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "saveScore", email: userEmail, name: userName,
-      score: totalScore, correctCount: correctCount,
-      wrongList: wrongText, arena: arena, qMastery: qMasteryStats,
-      holdPiece: holdPieceType || "",
-      claimedMilestones: claimedMilestones
-      // 【關鍵修復】：絕不在此處送背包，徹底阻止定時存檔把開箱扣除的鑰匙覆蓋回去！
-    })
-  }).then(() => updateSideLeaderboard());
 }
 
 /* ==================== 11. 暫存方塊與到底放置 ==================== */
