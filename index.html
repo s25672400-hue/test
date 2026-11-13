@@ -137,6 +137,7 @@
     .del-btn { background: #d32f2f; color: white; border: none; border-radius: 4px; padding: 3px 6px; font-size: 0.75rem; cursor: pointer; }
     .save-mini-btn { background: #4caf50; color: white; border: none; border-radius: 4px; padding: 3px 6px; font-size: 0.75rem; cursor: pointer; }
 
+    /* 鎖定按鈕位置對位 */
     .reward-container-box { position: relative; width: 100%; }
     .chest-overlay-grid {
       position: absolute; top: 17.2%; bottom: 4.6%; right: 4.8%; width: 21%;
@@ -191,7 +192,7 @@
       display: none;
     }
 
-    /* ==================== 震撼開箱＋火山噴發＋換卡切換動畫 ==================== */
+    /* 開箱動畫與卡片換卡動效 */
     @keyframes click-shake {
       0%, 100% { transform: scale(1) translate(0, 0) rotate(0deg); }
       10%, 30%, 50%, 70%, 90% { transform: scale(1.08) translate(-8px, -5px) rotate(-4deg); }
@@ -199,7 +200,6 @@
     }
     .anim-chest-shake { animation: click-shake 1.3s ease-in-out forwards; }
 
-    /* 火山噴發拋物線動畫 (在中央對稱噴射) */
     @keyframes fly-eruption-x { 0% { transform: translateX(-50%); } 100% { transform: translateX(calc(-50% + var(--tx))); } }
     @keyframes fly-eruption-y {
       0% { transform: translateY(-50%) scale(0.1); opacity: 0; animation-timing-function: ease-out; }
@@ -207,10 +207,8 @@
       45% { transform: translateY(calc(-50% + var(--peak-y, -200px))) scale(1.1); animation-timing-function: ease-in; }
       100% { transform: translateY(calc(-50% + var(--ty))) scale(1); opacity: 1; }
     }
-
     @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .anim-rays { animation: spin-slow 18s linear infinite; }
-
     @keyframes pulse-intense {
       0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
       50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
@@ -227,17 +225,15 @@
     }
     .text-rainbow { animation: rainbow-text 2s linear infinite; }
 
-    /* 【換卡切換動效】：從中心旋轉放大進場 */
+    /* 換卡切換動效 */
     @keyframes cardZoomInFromCenter {
       0% { transform: translate(-50%, -50%) scale(0.1) rotate(-140deg); opacity: 0; filter: blur(6px); }
-      70% { transform: translate(-50%, -50%) scale(1.08) rotate(8deg); opacity: 1; filter: blur(0); }
+      70% { transform: translate(-50%, -50%) scale(1.06) rotate(6deg); opacity: 1; filter: blur(0); }
       100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
     }
     .anim-card-in {
       animation: cardZoomInFromCenter 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
-
-    /* 【換卡切換動效】：向中心旋轉縮小退場 */
     @keyframes cardShrinkToCenter {
       0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
       100% { transform: translate(-50%, -50%) scale(0.1) rotate(140deg); opacity: 0; filter: blur(6px); }
@@ -303,7 +299,7 @@
     </div>
   </div>
 
-  <!-- 2. 寶箱開啟動畫彈窗 (獲得鑰匙) -->
+  <!-- 2. 寶箱開啟動畫彈窗 -->
   <div id="open-chest-modal" class="modal" style="display:none; z-index:200;">
     <div class="modal-box" style="text-align:center; max-width:320px; background:#111; border:2px solid #ffd600; box-shadow:0 0 30px #ff9800;">
       <h3 style="color:#ffeb3b; margin:0 0 10px;">🎁 開啟【鑰匙寶箱】！</h3>
@@ -364,7 +360,7 @@
     </div>
   </div>
 
-  <!-- 6. 【震撼開箱全螢幕舞台：火山噴發 ➔ 逐張旋轉縮放檢視】 -->
+  <!-- 6. 【震撼開箱全螢幕舞台：大幅放大卡片 + 按鈕下移】 -->
   <div id="chest-animation-stage" style="display:none; position:fixed; inset:0; z-index:300; background:#000; flex-direction:column; align-items:center; justify-content:center; overflow:hidden;">
     <div id="flash-layer" style="position:fixed; inset:0; background:#fff; z-index:400; opacity:0; pointer-events:none; transition:opacity 0.2s ease-in;"></div>
 
@@ -379,11 +375,11 @@
         </div>
       </div>
 
-      <!-- 火山噴發層 (在中央周圍爆發飛散) -->
+      <!-- 火山噴發層 -->
       <div id="eruption-cards-container" style="position:absolute; top:45%; left:50%; width:0; height:0; z-index:45; pointer-events:none;"></div>
 
-      <!-- 中心點單張卡片旋轉放大展示區 (含換卡切換動畫) -->
-      <div id="single-card-showcase" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:80; display:none; flex-direction:column; align-items:center;"></div>
+      <!-- 【大幅放大卡片區 + 按鈕往下移】 -->
+      <div id="single-card-showcase" style="position:absolute; top:48%; left:50%; transform:translate(-50%, -50%); z-index:80; display:none; flex-direction:column; align-items:center; width:100%;"></div>
     </div>
   </div>
 
@@ -401,7 +397,6 @@
         <button style="background:#d32f2f; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;" onclick="logoutTeacher()">🚪 登出</button>
       </div>
 
-      <!-- 頁籤一：全班戰況 -->
       <div id="tab-scores">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-size:0.8rem; color:#aaa;">全班作答即時排行榜：</span>
@@ -415,7 +410,6 @@
         </div>
       </div>
 
-      <!-- 頁籤二：教師發放獎勵 -->
       <div id="tab-grantReward" style="display:none; text-align:left;">
         <h4 style="margin:5px 0 10px; color:#ba68c8;">🚀 手動發放鑰匙或道具給學生</h4>
         <label>選擇目標學生：</label>
@@ -450,7 +444,6 @@
         <div id="grant-status" style="margin-top:6px; font-size:0.85rem;"></div>
       </div>
 
-      <!-- 頁籤三：寶箱設定 -->
       <div id="tab-chestConfig" style="display:none; text-align:left;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <h4 style="margin:0; color:#ffd600;">🎁 11 款寶箱抽獎設定</h4>
@@ -493,7 +486,6 @@
         <div id="cfg-save-status" style="margin-top:4px; font-size:0.8rem;"></div>
       </div>
 
-      <!-- 頁籤四：題庫管理 -->
       <div id="tab-editQ" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-size:0.8rem; color:#aaa;">調整題目難度或刪除題目：</span>
@@ -507,7 +499,6 @@
         </div>
       </div>
 
-      <!-- 頁籤五：Excel 批次題庫匯入 -->
       <div id="tab-importExcel" style="display:none; text-align:left;">
         <h4 style="margin:5px 0 10px; color:#ffeb3b;">📑 Excel (.xlsx) 題庫批次上傳</h4>
         <button class="option-btn" style="text-align:center; background:#673ab7; margin-bottom:12px; padding:10px;" onclick="downloadExcelTemplate()">📥 下載標準出題 Excel 範本</button>
@@ -523,74 +514,11 @@
     </div>
   </div>
 
-  <!-- 其他必要彈窗 -->
-  <div id="login-modal" class="modal">
-    <div class="modal-box" style="text-align:center;">
-      <h3>🎮 答題俄羅斯方塊</h3>
-      <p style="font-size:0.85rem; color:#aaa; margin-bottom:15px;">請使用 Google 帳號登入驗證身分：</p>
-      <div id="g_id_onload" data-auto_prompt="false" data-callback="handleGoogleLogin"></div>
-      <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with"></div>
-      <div id="login-status" style="margin-top:12px; color:#81d4fa; font-size:0.85rem;"></div>
-    </div>
-  </div>
-
-  <div id="name-modal" class="modal" style="display:none;">
-    <div class="modal-box" style="text-align:center;">
-      <h3 style="color:#4caf50;">✅ Google 帳號驗證成功！</h3>
-      <p style="font-size:0.85rem; color:#aaa; text-align:left;">請輸入您的<strong>班級、座號與真實姓名</strong>：</p>
-      <input type="text" id="custom-name-input" class="input-field" placeholder="例如：302 05號 林小美">
-      <button class="option-btn" style="text-align:center; background:#4caf50; font-weight:bold;" onclick="confirmStudentName()">進入挑戰 ➡️</button>
-    </div>
-  </div>
-
-  <div id="quiz-modal" class="modal" style="display:none;">
-    <div class="modal-box">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:#333; padding:5px 8px; border-radius:6px;">
-        <span style="font-size:0.75rem; color:#ffeb3b; font-weight:bold;">🎯 出題最低門檻：</span>
-        <select id="user-diff-select" style="background:#222; color:#fff; border:1px solid #666; border-radius:4px; padding:2px 4px; font-size:0.75rem;" onchange="onDifficultyFilterChange()">
-          <option value="1">🌱 簡單以上 (全部)</option><option value="2">📘 普通以上</option><option value="3">⚡ 難以上</option>
-          <option value="4">🔥 非常難與地獄</option><option value="5">☠️ 僅地獄級</option>
-        </select>
-      </div>
-      <div id="q-diff-badge" class="diff-badge">難度載入中</div>
-      <span id="q-mastery-hint" style="font-size:0.72rem; color:#aaa; margin-left:6px;"></span>
-      <h3 id="q-title" style="margin-top:3px; font-size:1.1rem;">題目載入中...</h3>
-      <img id="q-image" class="q-img" style="display:none;" />
-      <div id="options-container"></div>
-      <div id="typing-container" style="display:none;">
-        <input type="text" id="type-answer-input" class="input-field" placeholder="請在此打字輸入答案..." autocomplete="off">
-        <button id="type-submit-btn" class="option-btn" style="text-align:center; background:#ff9800; font-weight:bold;" onclick="checkTypeAnswer()">送出答案 🚀</button>
-      </div>
-      <div id="feedback" style="margin-top:8px; font-weight:bold; line-height:1.4;"></div>
-      <button id="after-answer-btn" class="option-btn" style="display:none; text-align:center; background:#4caf50;" onclick="handleAfterAnswer()">繼續 ➡️</button>
-    </div>
-  </div>
-
-  <div id="turn-modal" class="modal" style="display:none; align-items:flex-start; padding-top:40px;">
-    <div class="modal-box" style="text-align:center;">
-      <h3 style="color:#ffeb3b; margin:0 0 5px;">🎯 方塊已就位！</h3>
-      <p style="margin:5px 0 10px;">目前累積總分：<b id="turn-score" style="font-size:1.3rem; color:#4caf50;">0</b> 分</p>
-      <button class="option-btn" style="text-align:center; background:#4caf50;" onclick="continueToNextQuiz()">繼續挑戰下一題 ➡️</button>
-      <button id="turn-save-btn" class="option-btn" style="text-align:center; background:#ff9800;" onclick="saveAndExit()">💾 儲存並退出</button>
-    </div>
-  </div>
-
-  <div id="drop-confirm-modal" class="modal" style="display:none; align-items:flex-start; padding-top:60px;">
-    <div class="modal-box" style="text-align:center; max-width:320px;">
-      <h3 style="color:#f44336; margin:0 0 10px;">⚠️ 確認到底放置？</h3>
-      <p style="font-size:0.85rem; color:#ccc; margin-bottom:15px;">方塊將直接落到底部固定。</p>
-      <div style="display:flex; gap:10px;">
-        <button class="option-btn" style="text-align:center; background:#d32f2f; margin:0; flex:1; font-weight:bold;" onclick="confirmHardDrop()">確定到底</button>
-        <button class="option-btn" style="text-align:center; background:#555; margin:0; flex:1;" onclick="cancelHardDrop()">取消</button>
-      </div>
-    </div>
-  </div>
-
 <script>
 /* ==================== 1. 老師設定區 ==================== */
-const GOOGLE_CLIENT_ID = "479239925260-p9kvntbmlp23ginho02tou72ckg0n9f1.apps.googleusercontent.com";
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4gsJeWiRma_jWSny0cvjlzCPGCY_A6Mz4qtP4dga7zZmFkxO1jm-sC8We8KCg3Cnu/exec";
-const TEACHER_EMAIL = "s256724@gmail.com";
+const GOOGLE_CLIENT_ID = "您的_GOOGLE_CLIENT_ID_貼在這邊";
+const GOOGLE_SCRIPT_URL = "您的_GOOGLE_SCRIPT_網址_貼在這邊";
+const TEACHER_EMAIL = "teacher@gmail.com";
 
 document.getElementById("g_id_onload").setAttribute("data-client_id", GOOGLE_CLIENT_ID);
 
@@ -843,7 +771,7 @@ function renderRewardPage(pageIdx) {
     } else if (isUnlocked) {
       btn.className = "chest-status-btn status-unlocked";
       btn.innerHTML = `<span class="lock-icon-elem">✨</span><span style="margin-left:2px;">開箱</span>`;
-      btn.onclick = (e) => triggerOpenChestWithAnimation(m, btn);
+      btn.onclick = () => triggerOpenChestWithAnimation(m, btn);
     } else {
       btn.className = "chest-status-btn status-locked";
       btn.innerHTML = `<span class="lock-icon-elem">🔒</span><span style="margin-left:2px;">鎖定</span>`;
@@ -973,7 +901,7 @@ function renderBackpackItems() {
   items.slice().reverse().forEach(it => {
     const card = document.createElement("div");
     card.style.cssText = `background:#1e1a29; border:1.5px solid ${it.rarity.color}; border-radius:8px; padding:8px 6px; text-align:center; box-shadow:0 0 10px ${it.rarity.color}33;`;
-    const imgHtml = it.image ? `<img src="${it.image}" style="width:40px; height:40px; object-fit:contain; margin:2px auto;" alt="${it.name}">` : `<div style="font-size:1.8rem; line-height:1;">🗡️</div>`;
+    const imgHtml = it.image ? `<img src="${it.image}" style="width:48px; height:48px; object-fit:contain; margin:2px auto;" alt="${it.name}">` : `<div style="font-size:2rem; line-height:1.1;">🗡️</div>`;
     card.innerHTML = `
       <span style="font-size:0.65rem; padding:1px 6px; border-radius:8px; background:${it.rarity.color}33; color:${it.rarity.color}; font-weight:bold;">${it.rarity.name}</span>
       ${imgHtml}
@@ -984,7 +912,7 @@ function renderBackpackItems() {
   });
 }
 
-/* ==================== 6. 【火山噴發 ➔ 逐張旋轉縮放開箱演算法】 ==================== */
+/* ==================== 6. 【火山噴發 ➔ 大幅放大卡片 ➔ 換卡縮放演算法】 ==================== */
 function promptUseKey(chestId) {
   const cDef = CHEST_DEFS.find(c => c.id === chestId);
   if (!cDef) return;
@@ -1069,7 +997,7 @@ function executeOpenChestSequence() {
   showcase.innerHTML = "";
   flash.style.opacity = "0";
 
-  // 1.2 秒後：內部綻放最高品級光芒
+  // 1.2 秒後：內部綻放光芒
   setTimeout(() => {
     glow.style.backgroundColor = highestR.color;
     glow.style.boxShadow = `0 0 160px 90px ${highestR.color}99`;
@@ -1079,7 +1007,7 @@ function executeOpenChestSequence() {
     rays.style.display = "block";
   }, 1200);
 
-  // 2.2 秒後：白光一閃，寶箱炸開，【第一階段：火山噴發飛向空中四周】！
+  // 2.2 秒後：白光一閃，火山噴發飛向空中四周！
   setTimeout(() => {
     flash.style.opacity = "1";
     setTimeout(() => {
@@ -1088,10 +1016,9 @@ function executeOpenChestSequence() {
       rays.style.display = "none";
       flash.style.opacity = "0";
 
-      // 觸發火山噴發 (保留爆發快感，並保證對稱在螢幕中心)
       playEruptionEffect(currentLootQueue);
 
-      // 噴發結束 (1.2 秒後)，自動淡出飛散卡片，無縫切換到【第二階段：單張旋轉放大展示】！
+      // 噴發 1.1 秒後，無縫聚焦至【中心大幅放大檢視】
       setTimeout(() => {
         eruptionContainer.style.transition = "opacity 0.4s ease-out";
         eruptionContainer.style.opacity = "0";
@@ -1102,7 +1029,7 @@ function executeOpenChestSequence() {
           eruptionContainer.style.transition = "";
 
           currentLootIndex = 0;
-          showNextLootCard(true); // 第一張卡片進場
+          showNextLootCard(true);
         }, 400);
       }, 1100);
 
@@ -1110,24 +1037,22 @@ function executeOpenChestSequence() {
   }, 2200);
 }
 
-// 【第一階段】：火山噴發 (對稱扇形飛射四周)
 function playEruptionEffect(items) {
   const container = document.getElementById("eruption-cards-container");
   container.innerHTML = "";
   const total = items.length;
-  const isLarge = total <= 3;
-  const cardW = isLarge ? 90 : 70;
-  const spacing = cardW + 15;
+  const cardW = 75;
+  const spacing = cardW + 12;
   const startX = -((total - 1) * spacing) / 2;
 
   items.forEach((it, idx) => {
     const tx = startX + idx * spacing;
-    const ty = -100 + (idx % 2 === 0 ? -20 : 15);
+    const ty = -100 + (idx % 2 === 0 ? -25 : 15);
 
     const card = document.createElement("div");
     card.style.cssText = `
       position:absolute; top:0; left:0;
-      --tx:${tx}px; --ty:${ty}px; --peak-y:-220px;
+      --tx:${tx}px; --ty:${ty}px; --peak-y:-230px;
       animation: fly-eruption-x 0.75s ease-out forwards, fly-eruption-y 0.75s forwards;
       animation-delay: ${idx * 0.08}s;
       width: ${cardW}px; border-radius: 10px; border: 2px solid ${it.rarity.color};
@@ -1146,12 +1071,11 @@ function playEruptionEffect(items) {
   });
 }
 
-// 【第二階段】：單張卡片旋轉放大，換卡時向中心縮放切換
+// 【大幅放大卡片 + 按鈕下移】
 function showNextLootCard(isFirst = false) {
   const showcase = document.getElementById("single-card-showcase");
 
   if (currentLootIndex >= currentLootQueue.length) {
-    // 全部檢視完畢：存檔並返回背包
     if (!studentBackpack.items) studentBackpack.items = [];
     currentLootQueue.forEach(it => studentBackpack.items.push(it));
 
@@ -1176,41 +1100,38 @@ function showNextLootCard(isFirst = false) {
   const it = currentLootQueue[currentLootIndex];
   const total = currentLootQueue.length;
 
+  // 依照藍色線條：卡片放大到佔滿 86% 寬度，圖片支援最大 230px 高度，充滿主體！
   const imgHtml = it.image ? 
-    `<img src="${it.image}" style="width:115px; height:115px; object-fit:contain; margin:15px auto; display:block; filter:drop-shadow(0 0 15px ${it.rarity.color});">` : 
-    `<div style="font-size:4.5rem; margin:15px 0;">🗡️</div>`;
+    `<img src="${it.image}" style="width:100%; max-width:220px; max-height:220px; object-fit:contain; margin:16px auto; display:block; filter:drop-shadow(0 0 20px ${it.rarity.color});">` : 
+    `<div style="font-size:5.5rem; margin:20px 0;">🗡️</div>`;
 
   showcase.innerHTML = `
-    <div style="width:260px; background:#181324; border:3px solid ${it.rarity.color}; border-radius:18px; padding:18px; text-align:center; box-shadow:0 0 40px ${it.rarity.color}99;">
-      <span style="font-size:0.9rem; padding:3px 12px; border-radius:12px; background:${it.rarity.color}44; color:${it.rarity.color}; font-weight:bold;">${it.rarity.name}</span>
+    <div style="width:min(86vw, 340px); background:#161124; border:3.5px solid ${it.rarity.color}; border-radius:22px; padding:22px 18px; text-align:center; box-shadow:0 0 50px ${it.rarity.color}aa;">
+      <span style="font-size:1rem; padding:4px 16px; border-radius:14px; background:${it.rarity.color}44; color:${it.rarity.color}; font-weight:bold;">${it.rarity.name}</span>
       ${imgHtml}
-      <div style="font-size:1.35rem; font-weight:800; color:${it.rarity.color}; margin-top:10px;" class="${it.rarity.isRainbow ? 'text-rainbow' : ''}">${it.name}</div>
+      <div style="font-size:1.5rem; font-weight:800; color:${it.rarity.color}; margin-top:10px;" class="${it.rarity.isRainbow ? 'text-rainbow' : ''}">${it.name}</div>
     </div>
-    <button class="option-btn" style="text-align:center; background:linear-gradient(135deg, #ffd600, #ff6f00); color:#000; font-size:1.1rem; font-weight:bold; border-radius:25px; margin-top:20px; padding:12px 30px; box-shadow:0 0 20px #ff9800;" onclick="confirmCurrentLootCard()">
+    <!-- 依照紅色箭頭：按鈕增加 margin-top 下移，貼近手指舒適區 -->
+    <button class="option-btn" style="text-align:center; background:linear-gradient(135deg, #ffd600, #ff6f00); color:#000; font-size:1.15rem; font-weight:bold; border-radius:28px; margin-top:38px; padding:14px 40px; width:min(86vw, 340px); box-shadow:0 0 25px #ff9800;" onclick="confirmCurrentLootCard()">
       確定收下 (${currentLootIndex + 1}/${total}) ➡️
     </button>
   `;
 
   showcase.style.display = "flex";
-  // 套用從中心旋轉放大進場動畫
   showcase.className = "anim-card-in";
 }
 
-// 點擊確認：當前卡牌向中心旋轉縮小，緊接著下一張從中心旋轉放大！
 function confirmCurrentLootCard() {
   const showcase = document.getElementById("single-card-showcase");
-  
-  // 第一張卡牌向中心縮小退場
-  showcase.className = "anim-card-out";
+  showcase.className = "anim-card-out"; // 第一張向中心旋轉縮小
 
   setTimeout(() => {
     currentLootIndex++;
-    // 第二張卡牌從中心旋轉放大進場
-    showNextLootCard(false);
-  }, 300); // 縮小 0.3 秒後無縫換卡
+    showNextLootCard(false); // 第二張從中心爆發放大
+  }, 320);
 }
 
-/* ==================== 7. 教師後台 (發放獎勵修復 + 圖片上傳) ==================== */
+/* ==================== 7. 教師後台 ==================== */
 function openAdmin() {
   document.getElementById("admin-modal").style.display = "flex";
   fetchClassScores();
@@ -1313,7 +1234,7 @@ function compressImageToBase64(file, callback) {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const MAX_SIZE = 180;
+      const MAX_SIZE = 200;
       let width = img.width, height = img.height;
       if (width > height && width > MAX_SIZE) {
         height *= MAX_SIZE / width; width = MAX_SIZE;
@@ -1323,7 +1244,7 @@ function compressImageToBase64(file, callback) {
       canvas.width = width; canvas.height = height;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
-      callback(canvas.toDataURL('image/jpeg', 0.8));
+      callback(canvas.toDataURL('image/jpeg', 0.82));
     };
     img.src = e.target.result;
   };
@@ -1391,8 +1312,8 @@ function renderPoolItems() {
     row.style.cssText = "display:flex; gap:6px; align-items:center; margin-bottom:6px; background:#292929; padding:4px 6px; border-radius:6px;";
     
     const previewHtml = it.image ? 
-      `<img src="${it.image}" style="width:34px; height:34px; object-fit:contain; border-radius:4px; border:1px solid #555;">` :
-      `<span style="font-size:0.7rem; color:#aaa; width:34px; text-align:center;">無圖</span>`;
+      `<img src="${it.image}" style="width:36px; height:36px; object-fit:contain; border-radius:4px; border:1px solid #555;">` :
+      `<span style="font-size:0.7rem; color:#aaa; width:36px; text-align:center;">無圖</span>`;
 
     row.innerHTML = `
       <label style="cursor:pointer; display:flex; align-items:center; gap:3px;" title="點此更換圖片">
