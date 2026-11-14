@@ -66,7 +66,6 @@
       font-weight: bold; box-shadow: 0 2px 6px rgba(186,104,200,0.4); text-align: center;
     }
 
-    /* 【新增】背包下方的「開始答題」綠色醒目按鈕 */
     .start-quiz-btn {
       background: linear-gradient(135deg, #2e7d32, #43a047);
       color: #fff; border: 1.5px solid #66bb6a; border-radius: 6px;
@@ -270,7 +269,6 @@
 
       <button class="reward-entry-btn" onclick="openRewardModal()">🏆 積分成就</button>
       <button id="backpack-btn" onclick="openBackpackModal()">🎒 道具背包</button>
-      <!-- 【圖三紅圈處】：新增開始答題按鈕 -->
       <button id="start-quiz-btn" class="start-quiz-btn" onclick="openQuiz()">🎮 開始答題</button>
     </div>
 
@@ -720,6 +718,11 @@ let pendingUseKeyData = null;
 let adminStudentBagsList = [];
 let currentAdminTargetStudent = null;
 
+// 【新增】：心跳定時器、伺服器版本時間戳、踢出鎖定狀態
+let heartbeatTimer = null;
+let lastServerTimestamp = 0;
+let isKickingOut = false;
+
 const MAX_CORRECT_PER_Q = 5, REVIEW_INTERVAL = 2;
 const diffConfigs = {
   1: { name: "🌱 簡單 (+1分)", class: "diff-1", score: 1 },
@@ -800,7 +803,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   drawHoldCanvas();
 });
 
-// 【核心修改】：登入時若被鎖定，當場阻擋進入！登入成功後停在大廳，不強制彈題！
+// 【核心修改】：登入檢查鎖定、時間戳防覆蓋比對、登入成功後啟動心跳監控
 async function confirmStudentName() {
   const inputName = document.getElementById("custom-name-input").value.trim();
   if (!inputName) { alert("請輸入您的班級座號與姓名！"); return; }
@@ -815,36 +818,44 @@ async function confirmStudentName() {
     cloudData = await res.json();
   } catch (e) {}
 
-  // 【改動 1】：如果學生處於鎖定狀態，在附圖二當場彈出警示，退回首頁，絕不放行！
+  // 1. 若處於鎖定狀態，彈出警示，退回登入首頁阻擋進入
   if (cloudData && cloudData.status === "locked") {
     alert(cloudData.msg || `⚠️ 老師正在校正您的成績，距離解鎖還剩 ${cloudData.remainSeconds} 秒，請稍候再登入！`);
     document.getElementById("name-modal").style.display = "none";
     document.getElementById("login-modal").style.display = "flex";
-    return; // 終止，絕不進入遊戲！
+    return;
   }
 
   document.getElementById("name-modal").style.display = "none";
 
+  // 讀取手機本地快取
   let localBackup = null;
   try { localBackup = JSON.parse(localStorage.getItem("tetris_local_save_" + userEmail)); } catch(e){}
 
-  let fScore = (cloudData && cloudData.score) ? cloudData.score : 0;
-  let fCorrect = (cloudData && cloudData.correctCount) ? cloudData.correctCount : 0;
+  let fScore = (cloudData && cloudData.score !== undefined) ? cloudData.score : 0;
+  let fCorrect = (cloudData && cloudData.correctCount !== undefined) ? cloudData.correctCount : 0;
   let fArena = cloudData ? cloudData.arena : null;
   let fHold = cloudData ? (cloudData.holdPiece || "") : "";
   let fMastery = cloudData ? (cloudData.qMastery || {}) : {};
   let fWrong = (cloudData && cloudData.wrongList && cloudData.wrongList !== "無 (全對)") ? cloudData.wrongList.split("; ") : [];
   let fClaimed = cloudData ? (cloudData.claimedMilestones || []) : [];
+  lastServerTimestamp = (cloudData && cloudData.serverTime) ? cloudData.serverTime : Date.now();
 
-  if (localBackup && localBackup.score > fScore) {
-    fScore = localBackup.score;
-    fCorrect = Math.max(fCorrect, localBackup.correctCount || 0);
-    if (localBackup.arena && localBackup.arena.length > 0) fArena = localBackup.arena;
-    if (localBackup.holdPiece) fHold = localBackup.holdPiece;
-    if (localBackup.qMastery) fMastery = localBackup.qMastery;
-    if (localBackup.wrongList) fWrong = localBackup.wrongList;
-    if (localBackup.claimedMilestones) fClaimed = localBackup.claimedMilestones;
-    setTimeout(autoSaveToCloud, 800);
+  // 【核心防護】：若學生曾離線遊玩（本地時間戳大於雲端時間戳），自動將離線進度同步上雲端，絕不白做工！
+  // 若伺服器時間較新（代表老師手動在試算表修改過），清除手機舊快取，以試算表修改為絕對準則！
+  if (localBackup && localBackup.timestamp && localBackup.timestamp > lastServerTimestamp) {
+    if (localBackup.score > fScore) {
+      fScore = localBackup.score;
+      fCorrect = Math.max(fCorrect, localBackup.correctCount || 0);
+      if (localBackup.arena && localBackup.arena.length > 0) fArena = localBackup.arena;
+      if (localBackup.holdPiece) fHold = localBackup.holdPiece;
+      if (localBackup.qMastery) fMastery = localBackup.qMastery;
+      if (localBackup.wrongList) fWrong = localBackup.wrongList;
+      if (localBackup.claimedMilestones) fClaimed = localBackup.claimedMilestones;
+      setTimeout(autoSaveToCloud, 800);
+    }
+  } else {
+    localStorage.removeItem("tetris_local_save_" + userEmail);
   }
 
   totalScore = fScore;
@@ -868,29 +879,73 @@ async function confirmStudentName() {
   updateSideLeaderboard();
   checkMilestoneAlerts();
 
-  // 【改動 2】：不再自動呼叫 openQuiz()！停在大廳讓學生先查看背包或成就！
+  // 登入成功後啟動心跳守護（停在大廳也能隨時被偵測）
+  startHeartbeat();
 }
 
-function saveLocalBackup() {
-  if (!userEmail) return;
-  const backup = {
-    email: userEmail,
-    name: userName,
-    score: totalScore,
-    correctCount: correctCount,
-    arena: arena,
-    holdPiece: holdPieceType,
-    qMastery: qMasteryStats,
-    wrongList: wrongQuestions,
-    claimedMilestones: claimedMilestones,
-    timestamp: Date.now()
-  };
-  localStorage.setItem("tetris_local_save_" + userEmail, JSON.stringify(backup));
+/* ==================== 15秒心跳與「先存後踢」機制 ==================== */
+function startHeartbeat() {
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  if (isTeacher || !userEmail) return;
+
+  heartbeatTimer = setInterval(async () => {
+    if (!userEmail || isKickingOut) return;
+    try {
+      const res = await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "heartbeat", email: userEmail })
+      });
+      const data = await res.json();
+      if (data && data.status === "require_kick") {
+        performFinalSaveAndKick(data.msg);
+      }
+    } catch (e) {
+      // 網路暫時波動不干擾目前進程
+    }
+  }, 15000);
 }
 
+// 【關鍵要求】：學生被踢下線前，先存後踢，保存完畢再退出！
+async function performFinalSaveAndKick(alertMsg) {
+  if (isKickingOut) return;
+  isKickingOut = true;
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+
+  gamePaused = true;
+  const wrongText = wrongQuestions.length > 0 ? wrongQuestions.join("; ") : "無 (全對)";
+
+  // 1. 發送緊急封存請求，將當下毫秒級的進度寫入試算表
+  try {
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "kickFinalSave",
+        email: userEmail,
+        name: userName,
+        score: totalScore,
+        correctCount: correctCount,
+        wrongList: wrongText,
+        arena: arena,
+        qMastery: qMasteryStats,
+        holdPiece: holdPieceType || ""
+      })
+    });
+  } catch(e) {
+    console.warn("緊急封存連線異常，本地已備份。");
+  }
+
+  // 2. 存檔完成後，清除本地快取，避免未來干擾老師在試算表修改的成績
+  localStorage.removeItem("tetris_local_save_" + userEmail);
+
+  // 3. 彈出提示並重整刷新至首頁
+  alert(alertMsg || "老師正在校正您的成績，系統已為您妥善保存當前紀錄！請於 2 分鐘後重新登入！");
+  location.reload();
+}
+
+// 隨時自動存檔（每次消除、答對、換塊均觸發）
 function autoSaveToCloud() {
   saveLocalBackup();
-  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("貼在這邊")) return;
+  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("貼在這邊") || isKickingOut) return;
 
   const wrongText = wrongQuestions.length > 0 ? wrongQuestions.join("; ") : "無 (全對)";
   fetch(GOOGLE_SCRIPT_URL, {
@@ -908,12 +963,29 @@ function autoSaveToCloud() {
       claimedMilestones: claimedMilestones
     })
   }).then(res => res.json()).then(data => {
-    if (data && data.status === "force_logout") {
-      localStorage.removeItem("tetris_local_save_" + userEmail);
-      alert(data.msg || "老師正在校正您的成績，遊戲將暫時關閉，請於 2 分鐘後重新登入！");
-      location.reload();
+    if (data && data.status === "require_kick") {
+      performFinalSaveAndKick(data.msg);
+    } else if (data && data.serverTime) {
+      lastServerTimestamp = data.serverTime;
     }
-  }).catch(e => console.warn("背景自動存檔暫時離線。"));
+  }).catch(e => console.warn("背景自動存檔暫時離線，進度已保留於手機本地。"));
+}
+
+function saveLocalBackup() {
+  if (!userEmail) return;
+  const backup = {
+    email: userEmail,
+    name: userName,
+    score: totalScore,
+    correctCount: correctCount,
+    arena: arena,
+    holdPiece: holdPieceType,
+    qMastery: qMasteryStats,
+    wrongList: wrongQuestions,
+    claimedMilestones: claimedMilestones,
+    timestamp: Date.now()
+  };
+  localStorage.setItem("tetris_local_save_" + userEmail, JSON.stringify(backup));
 }
 
 async function loadQuestionsFromCloud() {
@@ -1789,7 +1861,7 @@ async function fetchClassScores() {
 }
 
 async function adminLockStudent(targetEmail, studentName) {
-  if (!confirm(`確定要將「${studentName}」強制登出並鎖定 2 分鐘嗎？\n\n📌 鎖定期間學生無法進入遊戲，且手機端的舊快取會被清空。\n📌 您可以趁這 2 分鐘打開 Google 試算表修改他的成績或清空盤面！`)) return;
+  if (!confirm(`確定要將「${studentName}」強制登出並鎖定 2 分鐘嗎？\n\n📌 系統會在鎖定生效前，先將該學生手機當前分數完整封存存檔，絕不白做工！\n📌 鎖定期間學生無法進入遊戲，您可以放心在試算表修改其成績！`)) return;
 
   try {
     const res = await fetch(GOOGLE_SCRIPT_URL, {
@@ -1802,7 +1874,7 @@ async function adminLockStudent(targetEmail, studentName) {
     });
     const data = await res.json();
     if (data.status === "locked_success") {
-      alert(`🔒 已成功鎖定【${studentName}】至 ${data.lockUntil}！\n請現在前往試算表修改他的成績數據，2 分鐘內學生無法登入覆蓋！`);
+      alert(`🔒 已成功鎖定【${studentName}】至 ${data.lockUntil}！\n學生稍後將被安全封存並退出遊戲，您現在可前往試算表校正其分數！`);
     }
   } catch(e) { alert("鎖定失敗，請檢查網路連線！"); }
 }
