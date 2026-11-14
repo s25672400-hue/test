@@ -611,13 +611,15 @@
     </div>
   </div>
 
-  <!-- 回合結算選單 -->
+  <!-- 回合結算選單 (【修改處】：新增返回大廳按鈕) -->
   <div id="turn-modal" class="modal" style="display:none; align-items:flex-start; padding-top:40px;">
     <div class="modal-box" style="text-align:center;">
       <h3 style="color:#ffeb3b; margin:0 0 5px;">🎯 方塊已就位！</h3>
       <p style="margin:5px 0 10px;">目前累積總分：<b id="turn-score" style="font-size:1.3rem; color:#4caf50;">0</b> 分</p>
       <button class="option-btn" style="text-align:center; background:#4caf50;" onclick="continueToNextQuiz()">繼續挑戰下一題 ➡️</button>
       <button id="turn-save-btn" class="option-btn" style="text-align:center; background:#ff9800;" onclick="saveAndExit()">💾 儲存並退出</button>
+      <!-- 【新增】：返回大廳按鈕 -->
+      <button class="option-btn" style="text-align:center; background:#673ab7; font-weight:bold; margin-top:6px;" onclick="returnToLobbyFromTurn()">🏠 返回大廳 (查看背包/成就)</button>
     </div>
   </div>
 
@@ -718,10 +720,11 @@ let pendingUseKeyData = null;
 let adminStudentBagsList = [];
 let currentAdminTargetStudent = null;
 
-// 【新增】：心跳定時器、伺服器版本時間戳、踢出鎖定狀態
 let heartbeatTimer = null;
 let lastServerTimestamp = 0;
 let isKickingOut = false;
+// 【新增】：開箱動畫播放中鎖定旗標，徹底杜絕連按重複領取
+let isClaimingKeyAnimation = false;
 
 const MAX_CORRECT_PER_Q = 5, REVIEW_INTERVAL = 2;
 const diffConfigs = {
@@ -803,7 +806,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   drawHoldCanvas();
 });
 
-// 【核心修改】：登入檢查鎖定、時間戳防覆蓋比對、登入成功後啟動心跳監控
 async function confirmStudentName() {
   const inputName = document.getElementById("custom-name-input").value.trim();
   if (!inputName) { alert("請輸入您的班級座號與姓名！"); return; }
@@ -818,7 +820,6 @@ async function confirmStudentName() {
     cloudData = await res.json();
   } catch (e) {}
 
-  // 1. 若處於鎖定狀態，彈出警示，退回登入首頁阻擋進入
   if (cloudData && cloudData.status === "locked") {
     alert(cloudData.msg || `⚠️ 老師正在校正您的成績，距離解鎖還剩 ${cloudData.remainSeconds} 秒，請稍候再登入！`);
     document.getElementById("name-modal").style.display = "none";
@@ -828,7 +829,6 @@ async function confirmStudentName() {
 
   document.getElementById("name-modal").style.display = "none";
 
-  // 讀取手機本地快取
   let localBackup = null;
   try { localBackup = JSON.parse(localStorage.getItem("tetris_local_save_" + userEmail)); } catch(e){}
 
@@ -841,8 +841,6 @@ async function confirmStudentName() {
   let fClaimed = cloudData ? (cloudData.claimedMilestones || []) : [];
   lastServerTimestamp = (cloudData && cloudData.serverTime) ? cloudData.serverTime : Date.now();
 
-  // 【核心防護】：若學生曾離線遊玩（本地時間戳大於雲端時間戳），自動將離線進度同步上雲端，絕不白做工！
-  // 若伺服器時間較新（代表老師手動在試算表修改過），清除手機舊快取，以試算表修改為絕對準則！
   if (localBackup && localBackup.timestamp && localBackup.timestamp > lastServerTimestamp) {
     if (localBackup.score > fScore) {
       fScore = localBackup.score;
@@ -879,7 +877,6 @@ async function confirmStudentName() {
   updateSideLeaderboard();
   checkMilestoneAlerts();
 
-  // 登入成功後啟動心跳守護（停在大廳也能隨時被偵測）
   startHeartbeat();
 }
 
@@ -899,13 +896,10 @@ function startHeartbeat() {
       if (data && data.status === "require_kick") {
         performFinalSaveAndKick(data.msg);
       }
-    } catch (e) {
-      // 網路暫時波動不干擾目前進程
-    }
+    } catch (e) {}
   }, 15000);
 }
 
-// 【關鍵要求】：學生被踢下線前，先存後踢，保存完畢再退出！
 async function performFinalSaveAndKick(alertMsg) {
   if (isKickingOut) return;
   isKickingOut = true;
@@ -914,7 +908,6 @@ async function performFinalSaveAndKick(alertMsg) {
   gamePaused = true;
   const wrongText = wrongQuestions.length > 0 ? wrongQuestions.join("; ") : "無 (全對)";
 
-  // 1. 發送緊急封存請求，將當下毫秒級的進度寫入試算表
   try {
     await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
@@ -934,15 +927,11 @@ async function performFinalSaveAndKick(alertMsg) {
     console.warn("緊急封存連線異常，本地已備份。");
   }
 
-  // 2. 存檔完成後，清除本地快取，避免未來干擾老師在試算表修改的成績
   localStorage.removeItem("tetris_local_save_" + userEmail);
-
-  // 3. 彈出提示並重整刷新至首頁
   alert(alertMsg || "老師正在校正您的成績，系統已為您妥善保存當前紀錄！請於 2 分鐘後重新登入！");
   location.reload();
 }
 
-// 隨時自動存檔（每次消除、答對、換塊均觸發）
 function autoSaveToCloud() {
   saveLocalBackup();
   if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("貼在這邊") || isKickingOut) return;
@@ -1037,6 +1026,7 @@ function openRewardModal() {
 }
 function closeRewardModal() { document.getElementById("reward-modal").style.display = "none"; }
 function changeRewardPage(delta) {
+  if (isClaimingKeyAnimation) return; // 動畫中禁止翻頁防誤觸
   currentRewardPageIndex += delta;
   if (currentRewardPageIndex < 0) currentRewardPageIndex = 0;
   if (currentRewardPageIndex > 4) currentRewardPageIndex = 4;
@@ -1062,13 +1052,16 @@ function renderRewardPage(pageIdx) {
     if (isClaimed) {
       btn.className = "chest-status-btn status-claimed";
       btn.innerHTML = `<span class="lock-icon-elem">✅</span><span style="margin-left:2px;">已領</span>`;
+      btn.disabled = true; // 已領取徹底停用
     } else if (isUnlocked) {
       btn.className = "chest-status-btn status-unlocked";
       btn.innerHTML = `<span class="lock-icon-elem">✨</span><span style="margin-left:2px;">開箱</span>`;
       btn.onclick = () => triggerOpenChestWithAnimation(m, btn);
+      if (isClaimingKeyAnimation) btn.disabled = true; // 領取動畫播放中禁止點擊任何開箱
     } else {
       btn.className = "chest-status-btn status-locked";
       btn.innerHTML = `<span class="lock-icon-elem">🔒</span><span style="margin-left:2px;">鎖定</span>`;
+      btn.disabled = true;
     }
     chestGrid.appendChild(btn);
   });
@@ -1076,6 +1069,9 @@ function renderRewardPage(pageIdx) {
 
 let currentOpeningMilestone = null;
 function triggerOpenChestWithAnimation(m, btnElement) {
+  if (isClaimingKeyAnimation) return; // 動畫中禁止再點開箱
+  if (claimedMilestones.includes(m.score)) return;
+
   const iconElem = btnElement.querySelector(".lock-icon-elem");
   if (iconElem) iconElem.classList.add("lock-icon-drop");
 
@@ -1088,11 +1084,26 @@ function triggerOpenChestWithAnimation(m, btnElement) {
   }, 1100);
 }
 
+// 【圖二核心修復】：放入背包第一時間標記已領取＋按鈕瞬間切換，徹底杜絕連按重複領取
 function collectKeyAnimation() {
-  document.getElementById("open-chest-modal").style.display = "none";
+  if (isClaimingKeyAnimation) return;
   const m = currentOpeningMilestone;
   if (!m) return;
 
+  // 1. 立即上鎖，防止連點
+  isClaimingKeyAnimation = true;
+  document.getElementById("open-chest-modal").style.display = "none";
+
+  // 2. 第一時間推入已領取陣列
+  if (!claimedMilestones.includes(m.score)) {
+    claimedMilestones.push(m.score);
+  }
+  saveLocalBackup();
+
+  // 3. 立即重新渲染成就按鈕，畫面上當場變為「✅ 已領」，杜絕任何連按可能！
+  renderRewardPage(currentRewardPageIndex);
+
+  // 4. 同步給後端寫入試算表
   fetch(GOOGLE_SCRIPT_URL, {
     method: "POST",
     body: JSON.stringify({
@@ -1109,11 +1120,9 @@ function collectKeyAnimation() {
       studentBackpack = data.updatedBackpack;
       saveLocalBackup();
     }
-  });
+  }).catch(e => console.warn("領取鑰匙同步連線中..."));
 
-  claimedMilestones.push(m.score);
-  saveLocalBackup();
-
+  // 5. 播放鑰匙飛向圈圈二背包動畫
   const tempBag = document.getElementById("temp-target-bag");
   tempBag.style.display = "flex";
 
@@ -1139,8 +1148,10 @@ function collectKeyAnimation() {
     setTimeout(() => {
       tempBag.style.display = "none";
       tempBag.classList.remove("bag-bump");
+      // 動畫完整結束，解開開箱鎖
+      isClaimingKeyAnimation = false;
+      renderRewardPage(currentRewardPageIndex);
     }, 600);
-    renderRewardPage(currentRewardPageIndex);
   }, 1750);
 }
 
@@ -2146,6 +2157,13 @@ function showTurnOptions() {
 }
 function continueToNextQuiz() { document.getElementById("turn-modal").style.display = "none"; openQuiz(); }
 function saveAndExit() { autoSaveToCloud(); alert("進度已完整同步！"); location.reload(); }
+
+// 【圖一新增功能】：擺完方塊後返回首頁大廳，讓學生有餘裕看背包與成就
+function returnToLobbyFromTurn() {
+  autoSaveToCloud(); // 安全自動存檔
+  document.getElementById("turn-modal").style.display = "none";
+  gamePaused = true;
+}
 
 /* ==================== 10. 排行榜 ==================== */
 async function updateSideLeaderboard() {
