@@ -1261,7 +1261,7 @@ function openItemDetailModal(itemIndex) {
   const descEl = document.getElementById("detail-item-desc");
   const metaEl = document.getElementById("detail-item-meta");
 
-  const displayName = it.name && it.name.trim() !== "" ? it.name : "未命名道具";
+  const displayName = it.name && it.name.trim() !== "" ? it.name : "";
   titleBar.innerHTML = `
     <span style="color:#fff;">${displayName}</span>
     <span style="font-size:0.75rem; padding:2px 8px; border-radius:6px; background:${it.rarity.color}44; color:${it.rarity.color};">[${it.rarity.name}]</span>
