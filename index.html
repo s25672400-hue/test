@@ -105,7 +105,7 @@
     }
     .modal-box {
       background: #262626; padding: 20px; border-radius: 12px;
-      width: 92%; max-width: 540px; text-align: left; max-height: 85vh; overflow-y: auto;
+      width: 92%; max-width: 520px; text-align: left; max-height: 85vh; overflow-y: auto;
     }
     .option-btn {
       width: 100%; margin: 6px 0; padding: 10px; font-size: 0.95rem;
@@ -137,6 +137,7 @@
     .del-btn { background: #d32f2f; color: white; border: none; border-radius: 4px; padding: 3px 6px; font-size: 0.75rem; cursor: pointer; }
     .save-mini-btn { background: #4caf50; color: white; border: none; border-radius: 4px; padding: 3px 6px; font-size: 0.75rem; cursor: pointer; }
 
+    /* 鎖定按鈕位置對位 */
     .reward-container-box { position: relative; width: 100%; }
     .chest-overlay-grid {
       position: absolute; top: 17.2%; bottom: 4.6%; right: 4.8%; width: 21%;
@@ -191,7 +192,7 @@
       display: none;
     }
 
-    /* 開箱動畫 */
+    /* 開箱動畫與卡片換卡動效 */
     @keyframes click-shake {
       0%, 100% { transform: scale(1) translate(0, 0) rotate(0deg); }
       10%, 30%, 50%, 70%, 90% { transform: scale(1.08) translate(-8px, -5px) rotate(-4deg); }
@@ -229,16 +230,12 @@
       70% { transform: translate(-50%, -50%) scale(1.06) rotate(6deg); opacity: 1; filter: blur(0); }
       100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
     }
-    .anim-card-in {
-      animation: cardZoomInFromCenter 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-    }
+    .anim-card-in { animation: cardZoomInFromCenter 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
     @keyframes cardShrinkToCenter {
       0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
       100% { transform: translate(-50%, -50%) scale(0.1) rotate(140deg); opacity: 0; filter: blur(6px); }
     }
-    .anim-card-out {
-      animation: cardShrinkToCenter 0.32s cubic-bezier(0.4, 0, 0.8, 0.4) forwards;
-    }
+    .anim-card-out { animation: cardShrinkToCenter 0.32s cubic-bezier(0.4, 0, 0.8, 0.4) forwards; }
   </style>
 </head>
 <body>
@@ -325,7 +322,7 @@
     </div>
   </div>
 
-  <!-- 4. 🎒 學生道具背包彈窗 -->
+  <!-- 4. 🎒 道具背包彈窗 (卡片排版調整：品質移至名稱後，圖片居中) -->
   <div id="backpack-modal" class="modal" style="display:none; z-index:120;">
     <div class="modal-box" style="background:#1c1028; border:2px solid #ba68c8; border-radius:14px; max-width:460px; box-shadow:0 0 20px rgba(186,104,200,0.4);">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #4a148c; padding-bottom:6px; margin-bottom:10px;">
@@ -345,6 +342,31 @@
     </div>
   </div>
 
+  <!-- 【全新】道具詳情說明視窗 (依照圖四比例：大圖佔上方，文字說明在下方) -->
+  <div id="item-detail-modal" class="modal" style="display:none; z-index:220;" onclick="if(event.target === this) closeItemDetailModal()">
+    <div class="modal-box" style="background:#181126; border:2.5px solid #ab47bc; border-radius:16px; max-width:340px; padding:16px; text-align:center; position:relative; box-shadow:0 0 30px rgba(171,71,188,0.5);">
+      <!-- 右上角關閉按鈕 -->
+      <button style="position:absolute; top:8px; right:12px; background:none; border:none; color:#aaa; font-size:1.3rem; cursor:pointer;" onclick="closeItemDetailModal()">✕</button>
+      
+      <!-- 頂部標題與品質 -->
+      <div id="detail-title-bar" style="font-size:1.15rem; font-weight:bold; margin-bottom:10px; padding-right:20px; display:flex; align-items:center; justify-content:center; gap:6px;"></div>
+
+      <!-- 上半部：大圖展示區 (圖四的「圖」區域) -->
+      <div style="background:#0b0812; border:1px solid #4a148c; border-radius:12px; padding:12px; margin-bottom:12px; height:200px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+        <img id="detail-item-img" src="" style="width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 0 15px rgba(255,214,0,0.4));" alt="道具">
+      </div>
+
+      <!-- 下半部：文字說明區 (圖四的「文字說明」區域) -->
+      <div style="background:#26183b; border:1px solid #7b1fa2; border-radius:10px; padding:10px; text-align:left; margin-bottom:12px;">
+        <div style="font-size:0.75rem; color:#ba68c8; font-weight:bold; margin-bottom:4px;">📜 道具說明：</div>
+        <div id="detail-item-desc" style="font-size:0.85rem; color:#fff; line-height:1.45; min-height:40px; word-break:break-all;"></div>
+        <div id="detail-item-meta" style="font-size:0.68rem; color:#aaa; margin-top:6px; border-top:1px dashed #4a148c; padding-top:4px;"></div>
+      </div>
+
+      <button class="option-btn" style="text-align:center; background:#7b1fa2; margin:0; padding:10px; font-weight:bold;" onclick="closeItemDetailModal()">關閉說明</button>
+    </div>
+  </div>
+
   <!-- 5. 開箱確認詢問彈窗 -->
   <div id="use-key-confirm-modal" class="modal" style="display:none; z-index:250;">
     <div class="modal-box" style="text-align:center; max-width:320px; background:#1e142b; border:2px solid #ba68c8; box-shadow:0 0 25px rgba(186,104,200,0.6);">
@@ -358,7 +380,7 @@
     </div>
   </div>
 
-  <!-- 6. 震撼開箱全螢幕舞台 -->
+  <!-- 6. 【震撼開箱全螢幕舞台】 -->
   <div id="chest-animation-stage" style="display:none; position:fixed; inset:0; z-index:300; background:#000; flex-direction:column; align-items:center; justify-content:center; overflow:hidden;">
     <div id="flash-layer" style="position:fixed; inset:0; background:#fff; z-index:400; opacity:0; pointer-events:none; transition:opacity 0.2s ease-in;"></div>
 
@@ -378,7 +400,7 @@
     </div>
   </div>
 
-  <!-- 7. 教師管理後台 (含全新「學生背包管理」分頁) -->
+  <!-- 7. 教師管理後台 -->
   <div id="admin-modal" class="modal" style="display:none;">
     <div class="modal-box">
       <div class="tab-bar" style="display:flex; justify-content:space-between; align-items:center;">
@@ -407,9 +429,8 @@
         </div>
       </div>
 
-      <!-- 【全新分頁】：學生背包管理 (名單 ➔ 點擊進入 ➔ 課堂核銷道具) -->
+      <!-- 頁籤二：學生背包管理 (課堂核銷) -->
       <div id="tab-studentBackpacks" style="display:none; text-align:left;">
-        <!-- 子檢視 1：學生名冊列表 -->
         <div id="adm-bp-list-view">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
             <h4 style="margin:0; color:#ba68c8;">🎒 學生道具背包總覽 (點擊學生進入管理)</h4>
@@ -417,28 +438,17 @@
           </div>
           <div style="overflow-x:auto;">
             <table>
-              <thead>
-                <tr>
-                  <th>姓名</th>
-                  <th>鑰匙摘要</th>
-                  <th>道具摘要</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody id="adm-bp-tbody">
-                <tr><td colspan="4">載入學生背包中...</td></tr>
-              </tbody>
+              <thead><tr><th>姓名</th><th>鑰匙摘要</th><th>道具摘要</th><th>操作</th></tr></thead>
+              <tbody id="adm-bp-tbody"><tr><td colspan="4">載入學生背包中...</td></tr></tbody>
             </table>
           </div>
         </div>
 
-        <!-- 子檢視 2：單一學生專屬背包管理 (課堂核銷) -->
         <div id="adm-bp-detail-view" style="display:none;">
           <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:6px; margin-bottom:10px;">
             <h4 style="margin:0; color:#ffd600;">正在管理：<span id="adm-bp-target-name" style="color:#00e5ff;">-</span> 的道具背包</h4>
             <button class="option-btn" style="width:auto; margin:0; padding:4px 10px; font-size:0.75rem; background:#555;" onclick="closeAdminStudentDetail()">⬅️ 返回學生名單</button>
           </div>
-
           <div style="font-size:0.85rem; color:#ba68c8; font-weight:bold; margin-bottom:6px;">🎁 學生持有的道具 (點擊核銷扣除)：</div>
           <div id="adm-bp-items-grid" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; max-height:45vh; overflow-y:auto; padding:2px;"></div>
         </div>
@@ -464,6 +474,8 @@
         <div id="grant-item-box" style="display:none;">
           <label>道具名稱：</label>
           <input type="text" id="grant-item-name" class="input-field" placeholder="例如：作業免寫券、特等榮譽勳章">
+          <label>道具說明：</label>
+          <input type="text" id="grant-item-desc" class="input-field" placeholder="例如：可在國語課免寫作業一次">
           <label>道具品級：</label>
           <select id="grant-item-rarity" class="input-field">
             <option value="common">普通 (灰)</option><option value="rare">稀有 (藍)</option>
@@ -481,7 +493,7 @@
         <div id="grant-status" style="margin-top:6px; font-size:0.85rem;"></div>
       </div>
 
-      <!-- 頁籤四：寶箱設定 -->
+      <!-- 頁籤四：寶箱設定 (新增道具詳細說明輸入框，方便老師隨時編輯) -->
       <div id="tab-chestConfig" style="display:none; text-align:left;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <h4 style="margin:0; color:#ffd600;">🎁 11 款寶箱抽獎設定</h4>
@@ -513,10 +525,10 @@
 
         <div style="background:#1e1e1e; padding:10px; border-radius:8px; border:1px solid #444;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span style="font-size:0.85rem; color:#69f0ae; font-weight:bold;">物品池設定 (可上傳圖片)</span>
+            <span style="font-size:0.85rem; color:#69f0ae; font-weight:bold;">物品池設定 (可輸入道具說明)</span>
             <div id="cfg-pool-tabs" style="display:flex; gap:4px;"></div>
           </div>
-          <div id="cfg-items-list" style="max-height:180px; overflow-y:auto; font-size:0.8rem;"></div>
+          <div id="cfg-items-list" style="max-height:220px; overflow-y:auto; font-size:0.8rem;"></div>
           <button class="option-btn" style="text-align:center; background:#333; border:1px dashed #777; margin-top:6px;" onclick="addPoolItem()">+ 新增該品級物品</button>
         </div>
 
@@ -554,7 +566,6 @@
     </div>
   </div>
 
-  <!-- 登入與其他彈窗 -->
   <div id="login-modal" class="modal">
     <div class="modal-box" style="text-align:center;">
       <h3>🎮 答題俄羅斯方塊</h3>
@@ -699,7 +710,6 @@ let cloudChestConfigs = {};
 let pendingUnlockTarget = null;
 let pendingUseKeyData = null; 
 
-// 後台專用學生背包資料
 let adminStudentBagsList = [];
 let currentAdminTargetStudent = null;
 
@@ -1038,7 +1048,7 @@ function collectKeyAnimation() {
   }, 1750);
 }
 
-/* ==================== 5. 🎒 道具背包檢視 ==================== */
+/* ==================== 5. 🎒 道具背包檢視 (卡片排版調整 + 點擊看詳情) ==================== */
 function openBackpackModal() {
   switchBackpackTab('keys');
   document.getElementById("backpack-modal").style.display = "flex";
@@ -1084,6 +1094,7 @@ function renderBackpackKeys() {
   }
 }
 
+// 【更新】：道具卡片排版：品質移到名稱後，圖片絕對居中，點擊彈出大圖說明視窗！
 function renderBackpackItems() {
   const grid = document.getElementById("backpack-items-grid");
   grid.innerHTML = "";
@@ -1094,18 +1105,89 @@ function renderBackpackItems() {
     return;
   }
 
-  items.slice().reverse().forEach(it => {
+  items.slice().reverse().forEach((it, idx) => {
+    // 真實原陣列索引
+    const realIndex = items.length - 1 - idx;
     const card = document.createElement("div");
-    card.style.cssText = `background:#1e1a29; border:1.5px solid ${it.rarity.color}; border-radius:8px; padding:8px 6px; text-align:center; box-shadow:0 0 10px ${it.rarity.color}33;`;
-    const imgHtml = it.image ? `<img src="${it.image}" style="width:48px; height:48px; object-fit:contain; margin:2px auto;" alt="${it.name}">` : `<div style="font-size:2rem; line-height:1.1;">🗡️</div>`;
+    card.style.cssText = `
+      background:#1e1a29; border:1.5px solid ${it.rarity.color}; border-radius:10px;
+      padding:10px 6px; text-align:center; box-shadow:0 0 10px ${it.rarity.color}33;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      min-height:120px; cursor:pointer; position:relative;
+    `;
+    card.onclick = () => openItemDetailModal(realIndex);
+
+    const imgHtml = it.image ? 
+      `<img src="${it.image}" style="width:48px; height:48px; object-fit:contain; margin:4px auto; display:block;" onerror="this.style.display='none'">` : 
+      `<div style="font-size:2.2rem; line-height:1; margin:4px auto;">🗡️</div>`;
+
+    // 依使用者需求：品質移至名稱後；若無名稱則品質在中間
+    let labelHtml = "";
+    if (it.name && it.name.trim() !== "") {
+      labelHtml = `
+        <div style="font-size:0.75rem; color:#fff; font-weight:bold; margin-top:4px; display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:wrap;">
+          <span>${it.name}</span>
+          <span style="font-size:0.62rem; padding:1px 5px; border-radius:4px; background:${it.rarity.color}33; color:${it.rarity.color}; font-weight:normal;">[${it.rarity.name}]</span>
+        </div>
+      `;
+    } else {
+      labelHtml = `
+        <span style="font-size:0.68rem; padding:2px 8px; border-radius:6px; background:${it.rarity.color}33; color:${it.rarity.color}; font-weight:bold; margin-top:4px;">
+          ${it.rarity.name}
+        </span>
+      `;
+    }
+
     card.innerHTML = `
-      <span style="font-size:0.65rem; padding:1px 6px; border-radius:8px; background:${it.rarity.color}33; color:${it.rarity.color}; font-weight:bold;">${it.rarity.name}</span>
       ${imgHtml}
-      <div style="font-size:0.75rem; color:#fff; font-weight:bold; margin-top:2px;">${it.name}</div>
-      <div style="font-size:0.6rem; color:#888;">${it.obtainedTime || ''}</div>
+      ${labelHtml}
+      <div style="font-size:0.58rem; color:#777; margin-top:2px;">${it.obtainedTime || ''}</div>
     `;
     grid.appendChild(card);
   });
+}
+
+// 【全新】：開啟道具詳情大圖說明視窗 (圖四比例：大圖佔上方，說明在下方)
+function openItemDetailModal(itemIndex) {
+  const items = studentBackpack.items || [];
+  const it = items[itemIndex];
+  if (!it) return;
+
+  const titleBar = document.getElementById("detail-title-bar");
+  const imgEl = document.getElementById("detail-item-img");
+  const descEl = document.getElementById("detail-item-desc");
+  const metaEl = document.getElementById("detail-item-meta");
+
+  // 標題與品質
+  const displayName = it.name && it.name.trim() !== "" ? it.name : "未命名道具";
+  titleBar.innerHTML = `
+    <span style="color:#fff;">${displayName}</span>
+    <span style="font-size:0.75rem; padding:2px 8px; border-radius:6px; background:${it.rarity.color}44; color:${it.rarity.color};">[${it.rarity.name}]</span>
+  `;
+
+  // 大圖展示
+  if (it.image) {
+    imgEl.src = it.image;
+    imgEl.style.display = "block";
+  } else {
+    imgEl.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><text y='65' font-size='60'>🗡️</text></svg>";
+    imgEl.style.display = "block";
+  }
+
+  // 文字說明 (若老師未填寫，提供預設說明)
+  descEl.innerText = it.desc && it.desc.trim() !== "" ? it.desc : "此道具可在課堂向老師兌換相應獎勵。";
+  
+  // 底部獲得時間與來源
+  metaEl.innerHTML = `
+    獲得時間：${it.obtainedTime || '未知'}<br>
+    來源途徑：${it.source || '神秘寶箱'}
+  `;
+
+  document.getElementById("item-detail-modal").style.display = "flex";
+}
+
+function closeItemDetailModal() {
+  document.getElementById("item-detail-modal").style.display = "none";
 }
 
 /* ==================== 6. 開箱流程 ==================== */
@@ -1310,7 +1392,7 @@ function confirmCurrentLootCard() {
   }, 320);
 }
 
-/* ==================== 7. 教師後台 (含學生背包管理與核銷) ==================== */
+/* ==================== 7. 教師後台 (含學生背包核銷與道具說明編輯) ==================== */
 function openAdmin() {
   document.getElementById("admin-modal").style.display = "flex";
   fetchClassScores();
@@ -1335,7 +1417,6 @@ function switchAdminTab(tab) {
   if (tab === "editQ") renderAdminQuestionsList();
 }
 
-// 【全新後台功能】：抓取全班學生背包列表
 async function fetchAdminAllBackpacks() {
   const tbody = document.getElementById("adm-bp-tbody");
   tbody.innerHTML = `<tr><td colspan="4">更新學生背包中...</td></tr>`;
@@ -1367,7 +1448,6 @@ async function fetchAdminAllBackpacks() {
   } catch(e) { tbody.innerHTML = `<tr><td colspan="4" style="color:red;">載入失敗！</td></tr>`; }
 }
 
-// 點擊學生姓名：進入該生專屬背包管理
 function openAdminStudentDetail(targetEmail) {
   const st = adminStudentBagsList.find(s => s.email.toLowerCase() === targetEmail.toLowerCase());
   if (!st) return;
@@ -1399,12 +1479,13 @@ function renderAdminStudentDetailItems() {
 
   items.forEach((it, idx) => {
     const card = document.createElement("div");
-    card.style.cssText = `background:#1e1a29; border:1.5px solid ${it.rarity.color}; border-radius:8px; padding:6px; text-align:center; box-shadow:0 0 10px ${it.rarity.color}33;`;
+    card.style.cssText = `background:#1e1a29; border:1.5px solid ${it.rarity.color}; border-radius:8px; padding:8px 6px; text-align:center; box-shadow:0 0 10px ${it.rarity.color}33; display:flex; flex-direction:column; align-items:center; justify-content:center;`;
     const imgHtml = it.image ? `<img src="${it.image}" style="width:40px; height:40px; object-fit:contain; margin:2px auto;" alt="${it.name}">` : `<div style="font-size:1.8rem;">🗡️</div>`;
     card.innerHTML = `
-      <span style="font-size:0.65rem; padding:1px 6px; border-radius:8px; background:${it.rarity.color}33; color:${it.rarity.color}; font-weight:bold;">${it.rarity.name}</span>
       ${imgHtml}
-      <div style="font-size:0.75rem; color:#fff; font-weight:bold; margin-top:2px;">${it.name}</div>
+      <div style="font-size:0.75rem; color:#fff; font-weight:bold; margin-top:2px;">
+        ${it.name || '未命名'} <span style="font-size:0.62rem; color:${it.rarity.color};">[${it.rarity.name}]</span>
+      </div>
       <div style="font-size:0.6rem; color:#888;">${it.obtainedTime || ''}</div>
       <button class="option-btn" style="text-align:center; background:#d32f2f; font-size:0.72rem; padding:4px; margin:6px 0 0; font-weight:bold;" onclick="consumeStudentItem(${idx}, '${it.name}')">✅ 課堂核銷 (扣除)</button>
     `;
@@ -1412,7 +1493,6 @@ function renderAdminStudentDetailItems() {
   });
 }
 
-// 老師當場核銷學生道具
 async function consumeStudentItem(itemIndex, itemName) {
   if (!confirm(`確定要為「${currentAdminTargetStudent.name}」核銷並扣除【${itemName}】嗎？\n核銷後學生背包將不再顯示此道具。`)) return;
 
@@ -1472,11 +1552,12 @@ async function submitGrantReward() {
 
   if (!targetEmail) { alert("請先選擇目標學生！"); return; }
 
-  let rewardName = "", rarity = null, itemImg = "";
+  let rewardName = "", rarity = null, itemImg = "", itemDesc = "";
   if (rewardType === "key") {
     rewardName = document.getElementById("grant-key-sel").value;
   } else {
     rewardName = document.getElementById("grant-item-name").value.trim();
+    itemDesc = document.getElementById("grant-item-desc").value.trim();
     const rKey = document.getElementById("grant-item-rarity").value.toUpperCase();
     rarity = RARITIES[rKey];
     itemImg = document.getElementById("grant-item-img").value.trim();
@@ -1495,21 +1576,22 @@ async function submitGrantReward() {
         rewardName: rewardName,
         amount: amount,
         rarity: rarity,
-        image: itemImg
+        image: itemImg,
+        desc: itemDesc
       })
     });
     const data = await res.json();
     if (data.status === "granted") {
       statusEl.innerHTML = `<b style="color:#4caf50;">🎉 成功發放 ${rewardName} ×${amount}！學生重開背包即可看見！</b>`;
     } else {
-      statusEl.innerHTML = `<b style="color:#f44336;">❌ 發放失敗：${data.msg || '伺服器未更新，請確認 Apps Script 已建立新版本部署！'}</b>`;
+      statusEl.innerHTML = `<b style="color:#f44336;">❌ 發放失敗：${data.msg || '伺服器未更新'}</b>`;
     }
   } catch(e) {
     statusEl.innerHTML = `<b style="color:#f44336;">❌ 連線失敗！請檢查網路連線。</b>`;
   }
 }
 
-// 寶箱設定面板
+// 寶箱設定面板 (支援隨時編輯道具說明)
 let currentEditChestId = "chest_1k";
 let activePoolTab = "common";
 
@@ -1559,29 +1641,36 @@ function renderPoolTabs() {
   });
 }
 
+// 支援「名稱」、「說明」與「選圖」直覺編輯
 function renderPoolItems() {
   const list = document.getElementById("cfg-items-list");
   list.innerHTML = "";
   const c = cloudChestConfigs[currentEditChestId];
-  const pools = (c && c.pools) ? c.pools : { common: [{name: '銘謝惠顧', image: 'Sorry.png'}] };
+  const pools = (c && c.pools) ? c.pools : { common: [{name: '銘謝惠顧', image: 'Sorry.png', desc: '很可惜這次沒中獎，下次再接再厲！'}] };
   if (!pools[activePoolTab]) pools[activePoolTab] = [];
 
   pools[activePoolTab].forEach((it, idx) => {
     const row = document.createElement("div");
-    row.style.cssText = "display:flex; gap:6px; align-items:center; margin-bottom:6px; background:#292929; padding:4px 6px; border-radius:6px;";
+    row.style.cssText = "display:flex; flex-direction:column; gap:4px; margin-bottom:8px; background:#292929; padding:6px 8px; border-radius:6px; border-left:3px solid #ffeb3b;";
     
     const previewHtml = it.image ? 
       `<img src="${it.image}" style="width:36px; height:36px; object-fit:contain; border-radius:4px; border:1px solid #555; background:#111;" onerror="this.style.display='none'">` :
       `<span style="font-size:0.7rem; color:#aaa; width:36px; text-align:center;">無圖</span>`;
 
     row.innerHTML = `
-      ${previewHtml}
-      <label style="cursor:pointer; background:#555; color:#fff; border-radius:4px; padding:4px 6px; font-size:0.72rem; white-space:nowrap;" title="點此選取電腦裡的圖片">
-        換圖
-        <input type="file" accept="image/*" style="display:none;" onchange="handleSelectFileForPool(${idx}, this.files[0])">
-      </label>
-      <input type="text" value="${it.name}" placeholder="請在此輸入物品名稱..." style="flex:1; background:#1e1e1e; color:#fff; border:1px solid #555; border-radius:4px; padding:5px 8px; font-size:0.85rem;" onchange="updatePoolItemName(${idx}, this.value)">
-      <button style="background:#d32f2f; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer;" onclick="removePoolItem(${idx})">✕</button>
+      <div style="display:flex; gap:6px; align-items:center;">
+        ${previewHtml}
+        <label style="cursor:pointer; background:#555; color:#fff; border-radius:4px; padding:3px 6px; font-size:0.72rem; white-space:nowrap;" title="點此選取電腦裡的圖片">
+          換圖
+          <input type="file" accept="image/*" style="display:none;" onchange="handleSelectFileForPool(${idx}, this.files[0])">
+        </label>
+        <input type="text" value="${it.name || ''}" placeholder="物品名稱 (如: 30元飲料券)" style="flex:1; background:#1e1e1e; color:#fff; border:1px solid #555; border-radius:4px; padding:4px 6px; font-size:0.85rem;" onchange="updatePoolItemName(${idx}, this.value)">
+        <button style="background:#d32f2f; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer;" onclick="removePoolItem(${idx})">✕</button>
+      </div>
+      <div style="display:flex; gap:4px; align-items:center;">
+        <span style="font-size:0.7rem; color:#ba68c8; white-space:nowrap;">說明:</span>
+        <input type="text" value="${it.desc || ''}" placeholder="填寫說明 (如: 可在課堂兌換飲料一杯)" style="flex:1; background:#1a1a1a; color:#ccc; border:1px solid #444; border-radius:4px; padding:3px 6px; font-size:0.75rem;" onchange="updatePoolItemDesc(${idx}, this.value)">
+      </div>
     `;
     list.appendChild(row);
   });
@@ -1600,10 +1689,14 @@ function updatePoolItemName(idx, val) {
   if (!cloudChestConfigs[currentEditChestId]) cloudChestConfigs[currentEditChestId] = { pools: {} };
   cloudChestConfigs[currentEditChestId].pools[activePoolTab][idx].name = val;
 }
+function updatePoolItemDesc(idx, val) {
+  if (!cloudChestConfigs[currentEditChestId]) cloudChestConfigs[currentEditChestId] = { pools: {} };
+  cloudChestConfigs[currentEditChestId].pools[activePoolTab][idx].desc = val;
+}
 function addPoolItem() {
   if (!cloudChestConfigs[currentEditChestId]) cloudChestConfigs[currentEditChestId] = { pools: {} };
   if (!cloudChestConfigs[currentEditChestId].pools[activePoolTab]) cloudChestConfigs[currentEditChestId].pools[activePoolTab] = [];
-  cloudChestConfigs[currentEditChestId].pools[activePoolTab].push({ name: "", image: "" });
+  cloudChestConfigs[currentEditChestId].pools[activePoolTab].push({ name: "", image: "", desc: "" });
   renderPoolItems();
 }
 function removePoolItem(idx) {
@@ -1641,7 +1734,7 @@ async function saveSelectedChestConfig() {
         pools: pools
       })
     });
-    statusEl.innerHTML = `<b style="color:#4caf50;">🎉 寶箱設定與物品圖片已成功同步至雲端試算表！</b>`;
+    statusEl.innerHTML = `<b style="color:#4caf50;">🎉 寶箱設定、圖片與說明已成功同步至雲端試算表！</b>`;
   } catch(e) { statusEl.innerText = "❌ 儲存失敗！"; }
 }
 
