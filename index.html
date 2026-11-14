@@ -889,7 +889,14 @@ function autoSaveToCloud() {
       holdPiece: holdPieceType || "",
       claimedMilestones: claimedMilestones
     })
-  }).then(() => updateSideLeaderboard()).catch(e => console.warn("背景自動存檔暫時離線。"));
+  }).then(res => res.json()).then(data => {
+    // 【核心攔截】：若老師發起維護鎖定，立刻清空本機舊存檔並強制退出！
+    if (data && data.status === "force_logout") {
+      localStorage.removeItem("tetris_local_save_" + userEmail);
+      alert(data.msg || "老師正在校正您的成績，遊戲將暫時關閉，請於 2 分鐘後重新登入！");
+      location.reload();
+    }
+  }).catch(e => console.warn("背景自動存檔暫時離線。"));
 }
 
 async function loadQuestionsFromCloud() {
@@ -1766,7 +1773,10 @@ async function fetchClassScores() {
           <td style="color:#4caf50; font-weight:bold;">${st.score}</td>
           <td>${st.correctCount}</td>
           <td style="color:#ff5252; font-size:0.75rem; text-align:left; line-height:1.3;">${wrongHtml}</td>
-          <td><button class="del-btn" onclick="deleteStudentRecord('${st.email}', '${st.name}')">🗑️ 刪除</button></td>
+          <td>
+            <button class="option-btn" style="width:auto; margin:0 2px; padding:3px 6px; font-size:0.72rem; background:#ff9800; font-weight:bold;" onclick="adminLockStudent('${st.email}', '${st.name}')">🔒 鎖定2分</button>
+            <button class="del-btn" style="margin-left:2px;" onclick="deleteStudentRecord('${st.email}', '${st.name}')">🗑️</button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
@@ -1784,6 +1794,28 @@ async function deleteStudentRecord(email, name) {
   alert(`已成功刪除 ${name} 的紀錄！`);
   fetchClassScores();
   updateSideLeaderboard();
+}
+
+// 老師發起強制登出並鎖定 2 分鐘，清空學生本機暫存，方便直接修改試算表！
+async function adminLockStudent(targetEmail, studentName) {
+  if (!confirm(`確定要將「${studentName}」強制登出並鎖定 2 分鐘嗎？\n\n📌 鎖定期間學生無法進入遊戲，且手機端的舊快取會被清空。\n📌 您可以趁這 2 分鐘打開 Google 試算表修改他的成績或清空盤面！`)) return;
+
+  try {
+    const res = await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "adminLockStudent",
+        targetEmail: targetEmail,
+        lockMinutes: 2
+      })
+    });
+    const data = await res.json();
+    if (data.status === "locked_success") {
+      alert(`🔒 已成功鎖定【${studentName}】至 ${data.lockUntil}！\n請現在前往試算表修改他的成績數據，2 分鐘內學生無法登入覆蓋！`);
+    }
+  } catch(e) {
+    alert("鎖定失敗，請檢查網路連線！");
+  }
 }
 
 async function renderAdminQuestionsList() {
