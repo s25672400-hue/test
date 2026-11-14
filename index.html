@@ -35,7 +35,7 @@
     }
     #left-side-col {
       width: 95px; min-width: 95px; max-width: 95px; flex-shrink: 0 !important;
-      display: flex; flex-direction: column; gap: 5px; justify-content: center;
+      display: flex; flex-direction: column; gap: 4px; justify-content: center;
     }
     #side-leaderboard {
       background: #222; border: 1.5px solid #444; border-radius: 6px;
@@ -65,6 +65,16 @@
       padding: 5px 2px; font-size: 0.72rem; width: 100%; cursor: pointer;
       font-weight: bold; box-shadow: 0 2px 6px rgba(186,104,200,0.4); text-align: center;
     }
+
+    /* 【新增】背包下方的「開始答題」綠色醒目按鈕 */
+    .start-quiz-btn {
+      background: linear-gradient(135deg, #2e7d32, #43a047);
+      color: #fff; border: 1.5px solid #66bb6a; border-radius: 6px;
+      padding: 6px 2px; font-size: 0.72rem; width: 100%; cursor: pointer;
+      font-weight: bold; box-shadow: 0 2px 6px rgba(46,125,50,0.4); text-align: center;
+      margin-top: 1px;
+    }
+    .start-quiz-btn:active { transform: scale(0.96); }
 
     #game-container { 
       position: relative; border: 3px solid #555; background: #000;
@@ -137,7 +147,6 @@
     .del-btn { background: #d32f2f; color: white; border: none; border-radius: 4px; padding: 3px 6px; font-size: 0.75rem; cursor: pointer; }
     .save-mini-btn { background: #4caf50; color: white; border: none; border-radius: 4px; padding: 3px 6px; font-size: 0.75rem; cursor: pointer; }
 
-    /* 鎖定按鈕位置對位 */
     .reward-container-box { position: relative; width: 100%; }
     .chest-overlay-grid {
       position: absolute; top: 17.2%; bottom: 4.6%; right: 4.8%; width: 21%;
@@ -192,7 +201,6 @@
       display: none;
     }
 
-    /* 開箱動畫與卡片換卡動效 */
     @keyframes click-shake {
       0%, 100% { transform: scale(1) translate(0, 0) rotate(0deg); }
       10%, 30%, 50%, 70%, 90% { transform: scale(1.08) translate(-8px, -5px) rotate(-4deg); }
@@ -262,6 +270,8 @@
 
       <button class="reward-entry-btn" onclick="openRewardModal()">🏆 積分成就</button>
       <button id="backpack-btn" onclick="openBackpackModal()">🎒 道具背包</button>
+      <!-- 【圖三紅圈處】：新增開始答題按鈕 -->
+      <button id="start-quiz-btn" class="start-quiz-btn" onclick="openQuiz()">🎮 開始答題</button>
     </div>
 
     <div id="game-container">
@@ -322,7 +332,7 @@
     </div>
   </div>
 
-  <!-- 4. 🎒 道具背包彈窗 (卡片排版調整：品質移至名稱後，圖片居中) -->
+  <!-- 4. 🎒 道具背包彈窗 -->
   <div id="backpack-modal" class="modal" style="display:none; z-index:120;">
     <div class="modal-box" style="background:#1c1028; border:2px solid #ba68c8; border-radius:14px; max-width:460px; box-shadow:0 0 20px rgba(186,104,200,0.4);">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #4a148c; padding-bottom:6px; margin-bottom:10px;">
@@ -342,27 +352,19 @@
     </div>
   </div>
 
-  <!-- 【全新】道具詳情說明視窗 (依照圖四比例：大圖佔上方，文字說明在下方) -->
+  <!-- 道具詳情大圖說明視窗 -->
   <div id="item-detail-modal" class="modal" style="display:none; z-index:220;" onclick="if(event.target === this) closeItemDetailModal()">
     <div class="modal-box" style="background:#181126; border:2.5px solid #ab47bc; border-radius:16px; max-width:340px; padding:16px; text-align:center; position:relative; box-shadow:0 0 30px rgba(171,71,188,0.5);">
-      <!-- 右上角關閉按鈕 -->
       <button style="position:absolute; top:8px; right:12px; background:none; border:none; color:#aaa; font-size:1.3rem; cursor:pointer;" onclick="closeItemDetailModal()">✕</button>
-      
-      <!-- 頂部標題與品質 -->
       <div id="detail-title-bar" style="font-size:1.15rem; font-weight:bold; margin-bottom:10px; padding-right:20px; display:flex; align-items:center; justify-content:center; gap:6px;"></div>
-
-      <!-- 上半部：大圖展示區 (圖四的「圖」區域) -->
       <div style="background:#0b0812; border:1px solid #4a148c; border-radius:12px; padding:12px; margin-bottom:12px; height:200px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
         <img id="detail-item-img" src="" style="width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 0 15px rgba(255,214,0,0.4));" alt="道具">
       </div>
-
-      <!-- 下半部：文字說明區 (圖四的「文字說明」區域) -->
       <div style="background:#26183b; border:1px solid #7b1fa2; border-radius:10px; padding:10px; text-align:left; margin-bottom:12px;">
         <div style="font-size:0.75rem; color:#ba68c8; font-weight:bold; margin-bottom:4px;">📜 道具說明：</div>
         <div id="detail-item-desc" style="font-size:0.85rem; color:#fff; line-height:1.45; min-height:40px; word-break:break-all;"></div>
         <div id="detail-item-meta" style="font-size:0.68rem; color:#aaa; margin-top:6px; border-top:1px dashed #4a148c; padding-top:4px;"></div>
       </div>
-
       <button class="option-btn" style="text-align:center; background:#7b1fa2; margin:0; padding:10px; font-weight:bold;" onclick="closeItemDetailModal()">關閉說明</button>
     </div>
   </div>
@@ -380,7 +382,7 @@
     </div>
   </div>
 
-  <!-- 6. 【震撼開箱全螢幕舞台】 -->
+  <!-- 6. 震撼開箱全螢幕舞台 -->
   <div id="chest-animation-stage" style="display:none; position:fixed; inset:0; z-index:300; background:#000; flex-direction:column; align-items:center; justify-content:center; overflow:hidden;">
     <div id="flash-layer" style="position:fixed; inset:0; background:#fff; z-index:400; opacity:0; pointer-events:none; transition:opacity 0.2s ease-in;"></div>
 
@@ -429,7 +431,7 @@
         </div>
       </div>
 
-      <!-- 頁籤二：學生背包管理 (課堂核銷) -->
+      <!-- 頁籤二：學生背包管理 -->
       <div id="tab-studentBackpacks" style="display:none; text-align:left;">
         <div id="adm-bp-list-view">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -493,7 +495,7 @@
         <div id="grant-status" style="margin-top:6px; font-size:0.85rem;"></div>
       </div>
 
-      <!-- 頁籤四：寶箱設定 (新增道具詳細說明輸入框，方便老師隨時編輯) -->
+      <!-- 頁籤四：寶箱設定 -->
       <div id="tab-chestConfig" style="display:none; text-align:left;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <h4 style="margin:0; color:#ffd600;">🎁 11 款寶箱抽獎設定</h4>
@@ -566,6 +568,7 @@
     </div>
   </div>
 
+  <!-- 唯一的登入彈窗 -->
   <div id="login-modal" class="modal">
     <div class="modal-box" style="text-align:center;">
       <h3>🎮 答題俄羅斯方塊</h3>
@@ -576,6 +579,7 @@
     </div>
   </div>
 
+  <!-- 學生自訂姓名確認視窗 -->
   <div id="name-modal" class="modal" style="display:none;">
     <div class="modal-box" style="text-align:center;">
       <h3 style="color:#4caf50;">✅ Google 帳號驗證成功！</h3>
@@ -585,6 +589,7 @@
     </div>
   </div>
 
+  <!-- 答題視窗 -->
   <div id="quiz-modal" class="modal" style="display:none;">
     <div class="modal-box">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:#333; padding:5px 8px; border-radius:6px;">
@@ -608,6 +613,7 @@
     </div>
   </div>
 
+  <!-- 回合結算選單 -->
   <div id="turn-modal" class="modal" style="display:none; align-items:flex-start; padding-top:40px;">
     <div class="modal-box" style="text-align:center;">
       <h3 style="color:#ffeb3b; margin:0 0 5px;">🎯 方塊已就位！</h3>
@@ -617,6 +623,7 @@
     </div>
   </div>
 
+  <!-- 到底放置防誤觸確認 -->
   <div id="drop-confirm-modal" class="modal" style="display:none; align-items:flex-start; padding-top:60px;">
     <div class="modal-box" style="text-align:center; max-width:320px;">
       <h3 style="color:#f44336; margin:0 0 10px;">⚠️ 確認到底放置？</h3>
@@ -793,11 +800,11 @@ window.addEventListener("DOMContentLoaded", async () => {
   drawHoldCanvas();
 });
 
+// 【核心修改】：登入時若被鎖定，當場阻擋進入！登入成功後停在大廳，不強制彈題！
 async function confirmStudentName() {
   const inputName = document.getElementById("custom-name-input").value.trim();
   if (!inputName) { alert("請輸入您的班級座號與姓名！"); return; }
   userName = inputName;
-  document.getElementById("name-modal").style.display = "none";
 
   let cloudData = null;
   try {
@@ -807,6 +814,16 @@ async function confirmStudentName() {
     });
     cloudData = await res.json();
   } catch (e) {}
+
+  // 【改動 1】：如果學生處於鎖定狀態，在附圖二當場彈出警示，退回首頁，絕不放行！
+  if (cloudData && cloudData.status === "locked") {
+    alert(cloudData.msg || `⚠️ 老師正在校正您的成績，距離解鎖還剩 ${cloudData.remainSeconds} 秒，請稍候再登入！`);
+    document.getElementById("name-modal").style.display = "none";
+    document.getElementById("login-modal").style.display = "flex";
+    return; // 終止，絕不進入遊戲！
+  }
+
+  document.getElementById("name-modal").style.display = "none";
 
   let localBackup = null;
   try { localBackup = JSON.parse(localStorage.getItem("tetris_local_save_" + userEmail)); } catch(e){}
@@ -848,9 +865,10 @@ async function confirmStudentName() {
   updateScoreUI();
   draw();
   drawHoldCanvas();
-  openQuiz();
   updateSideLeaderboard();
   checkMilestoneAlerts();
+
+  // 【改動 2】：不再自動呼叫 openQuiz()！停在大廳讓學生先查看背包或成就！
 }
 
 function saveLocalBackup() {
@@ -890,7 +908,6 @@ function autoSaveToCloud() {
       claimedMilestones: claimedMilestones
     })
   }).then(res => res.json()).then(data => {
-    // 【核心攔截】：若老師發起維護鎖定，立刻清空本機舊存檔並強制退出！
     if (data && data.status === "force_logout") {
       localStorage.removeItem("tetris_local_save_" + userEmail);
       alert(data.msg || "老師正在校正您的成績，遊戲將暫時關閉，請於 2 分鐘後重新登入！");
@@ -1055,7 +1072,7 @@ function collectKeyAnimation() {
   }, 1750);
 }
 
-/* ==================== 5. 🎒 道具背包檢視 (卡片排版調整 + 點擊看詳情) ==================== */
+/* ==================== 5. 🎒 道具背包檢視 ==================== */
 function openBackpackModal() {
   switchBackpackTab('keys');
   document.getElementById("backpack-modal").style.display = "flex";
@@ -1101,7 +1118,6 @@ function renderBackpackKeys() {
   }
 }
 
-// 【更新】：道具卡片排版：品質移到名稱後，圖片絕對居中，點擊彈出大圖說明視窗！
 function renderBackpackItems() {
   const grid = document.getElementById("backpack-items-grid");
   grid.innerHTML = "";
@@ -1113,7 +1129,6 @@ function renderBackpackItems() {
   }
 
   items.slice().reverse().forEach((it, idx) => {
-    // 真實原陣列索引
     const realIndex = items.length - 1 - idx;
     const card = document.createElement("div");
     card.style.cssText = `
@@ -1128,7 +1143,6 @@ function renderBackpackItems() {
       `<img src="${it.image}" style="width:48px; height:48px; object-fit:contain; margin:4px auto; display:block;" onerror="this.style.display='none'">` : 
       `<div style="font-size:2.2rem; line-height:1; margin:4px auto;">🗡️</div>`;
 
-    // 依使用者需求：品質移至名稱後；若無名稱則品質在中間
     let labelHtml = "";
     if (it.name && it.name.trim() !== "") {
       labelHtml = `
@@ -1154,7 +1168,6 @@ function renderBackpackItems() {
   });
 }
 
-// 【全新】：開啟道具詳情大圖說明視窗 (圖四比例：大圖佔上方，說明在下方)
 function openItemDetailModal(itemIndex) {
   const items = studentBackpack.items || [];
   const it = items[itemIndex];
@@ -1165,14 +1178,12 @@ function openItemDetailModal(itemIndex) {
   const descEl = document.getElementById("detail-item-desc");
   const metaEl = document.getElementById("detail-item-meta");
 
-  // 標題與品質
   const displayName = it.name && it.name.trim() !== "" ? it.name : "未命名道具";
   titleBar.innerHTML = `
     <span style="color:#fff;">${displayName}</span>
     <span style="font-size:0.75rem; padding:2px 8px; border-radius:6px; background:${it.rarity.color}44; color:${it.rarity.color};">[${it.rarity.name}]</span>
   `;
 
-  // 大圖展示
   if (it.image) {
     imgEl.src = it.image;
     imgEl.style.display = "block";
@@ -1181,14 +1192,8 @@ function openItemDetailModal(itemIndex) {
     imgEl.style.display = "block";
   }
 
-  // 文字說明 (若老師未填寫，提供預設說明)
   descEl.innerText = it.desc && it.desc.trim() !== "" ? it.desc : "此道具可在課堂向老師兌換相應獎勵。";
-  
-  // 底部獲得時間與來源
-  metaEl.innerHTML = `
-    獲得時間：${it.obtainedTime || '未知'}<br>
-    來源途徑：${it.source || '神秘寶箱'}
-  `;
+  metaEl.innerHTML = `獲得時間：${it.obtainedTime || '未知'}<br>來源途徑：${it.source || '神秘寶箱'}`;
 
   document.getElementById("item-detail-modal").style.display = "flex";
 }
@@ -1399,7 +1404,7 @@ function confirmCurrentLootCard() {
   }, 320);
 }
 
-/* ==================== 7. 教師後台 (含學生背包核銷與道具說明編輯) ==================== */
+/* ==================== 7. 教師後台 ==================== */
 function openAdmin() {
   document.getElementById("admin-modal").style.display = "flex";
   fetchClassScores();
@@ -1598,7 +1603,6 @@ async function submitGrantReward() {
   }
 }
 
-// 寶箱設定面板 (支援隨時編輯道具說明)
 let currentEditChestId = "chest_1k";
 let activePoolTab = "common";
 
@@ -1648,7 +1652,6 @@ function renderPoolTabs() {
   });
 }
 
-// 支援「名稱」、「說明」與「選圖」直覺編輯
 function renderPoolItems() {
   const list = document.getElementById("cfg-items-list");
   list.innerHTML = "";
@@ -1785,18 +1788,6 @@ async function fetchClassScores() {
   } catch (err) { tbody.innerHTML = `<tr><td colspan="5" style="color:red;">載入失敗！</td></tr>`; }
 }
 
-async function deleteStudentRecord(email, name) {
-  if (!confirm(`確定要刪除「${name}」的紀錄嗎？`)) return;
-  await fetch(GOOGLE_SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify({ action: "deleteStudent", email: email })
-  });
-  alert(`已成功刪除 ${name} 的紀錄！`);
-  fetchClassScores();
-  updateSideLeaderboard();
-}
-
-// 老師發起強制登出並鎖定 2 分鐘，清空學生本機暫存，方便直接修改試算表！
 async function adminLockStudent(targetEmail, studentName) {
   if (!confirm(`確定要將「${studentName}」強制登出並鎖定 2 分鐘嗎？\n\n📌 鎖定期間學生無法進入遊戲，且手機端的舊快取會被清空。\n📌 您可以趁這 2 分鐘打開 Google 試算表修改他的成績或清空盤面！`)) return;
 
@@ -1813,9 +1804,18 @@ async function adminLockStudent(targetEmail, studentName) {
     if (data.status === "locked_success") {
       alert(`🔒 已成功鎖定【${studentName}】至 ${data.lockUntil}！\n請現在前往試算表修改他的成績數據，2 分鐘內學生無法登入覆蓋！`);
     }
-  } catch(e) {
-    alert("鎖定失敗，請檢查網路連線！");
-  }
+  } catch(e) { alert("鎖定失敗，請檢查網路連線！"); }
+}
+
+async function deleteStudentRecord(email, name) {
+  if (!confirm(`確定要刪除「${name}」的紀錄嗎？`)) return;
+  await fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "deleteStudent", email: email })
+  });
+  alert(`已成功刪除 ${name} 的紀錄！`);
+  fetchClassScores();
+  updateSideLeaderboard();
 }
 
 async function renderAdminQuestionsList() {
